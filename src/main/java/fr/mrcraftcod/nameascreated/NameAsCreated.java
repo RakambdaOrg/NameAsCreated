@@ -1,5 +1,9 @@
 package fr.mrcraftcod.nameascreated;
 
+import com.drew.imaging.ImageMetadataReader;
+import com.drew.imaging.ImageProcessingException;
+import com.drew.metadata.Metadata;
+import com.drew.metadata.exif.ExifSubIFDDirectory;
 import fr.mrcraftcod.utils.base.Log;
 import java.io.File;
 import java.io.IOException;
@@ -139,6 +143,22 @@ public class NameAsCreated
 		Date date = new Date(attr.lastModifiedTime().toMillis());
 		Calendar currentCal = Calendar.getInstance();
 		currentCal.setTime(date);
+		
+		try
+		{
+			if(log)
+				System.out.format("Trying EXIF\n");
+			Metadata metadata = ImageMetadataReader.readMetadata(f);
+			ExifSubIFDDirectory directory = metadata.getFirstDirectoryOfType(ExifSubIFDDirectory.class);
+			Date takenDate = directory.getDate(ExifSubIFDDirectory.TAG_DATETIME_ORIGINAL);
+			if(log)
+				System.out.println("Matched");
+			return new NewFile(outputDateFormat.format(date), extension, f.getParentFile(), takenDate, f);
+		}
+		catch(ImageProcessingException e)
+		{
+			e.printStackTrace();
+		}
 		
 		for(SimpleDateFormat sdf : formats)
 		{

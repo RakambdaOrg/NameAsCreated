@@ -6,7 +6,7 @@
 
     <groupId>mrcraftcod</groupId>
     <artifactId>NAS</artifactId>
-    <version>2.0</version>
+    <version>2.1</version>
 
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
@@ -109,6 +109,11 @@
             <groupId>mrcraftcod</groupId>
             <artifactId>utils.base</artifactId>
             <version>2.0.1</version>
+        </dependency>
+        <dependency>
+            <groupId>com.drewnoakes</groupId>
+            <artifactId>metadata-extractor</artifactId>
+            <version>2.11.0</version>
         </dependency>
     </dependencies>
 </project>
