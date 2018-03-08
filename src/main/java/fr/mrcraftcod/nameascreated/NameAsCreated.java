@@ -149,11 +149,19 @@ public class NameAsCreated
 			if(log)
 				System.out.format("Trying EXIF\n");
 			Metadata metadata = ImageMetadataReader.readMetadata(f);
-			ExifSubIFDDirectory directory = metadata.getFirstDirectoryOfType(ExifSubIFDDirectory.class);
-			Date takenDate = directory.getDate(ExifSubIFDDirectory.TAG_DATETIME_ORIGINAL);
-			if(log)
-				System.out.println("Matched");
-			return new NewFile(outputDateFormat.format(date), extension, f.getParentFile(), takenDate, f);
+			if(metadata != null)
+			{
+				ExifSubIFDDirectory directory = metadata.getFirstDirectoryOfType(ExifSubIFDDirectory.class);
+				if(directory != null)
+				{
+					Date takenDate = directory.getDate(ExifSubIFDDirectory.TAG_DATETIME_ORIGINAL);
+					if(log)
+					{
+						System.out.println("Matched");
+					}
+					return new NewFile(outputDateFormat.format(date), extension, f.getParentFile(), takenDate, f);
+				}
+			}
 		}
 		catch(ImageProcessingException e)
 		{
