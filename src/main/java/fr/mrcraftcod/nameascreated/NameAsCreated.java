@@ -159,7 +159,7 @@ public class NameAsCreated
 					{
 						System.out.println("Matched");
 					}
-					return new NewFile(outputDateFormat.format(date), extension, f.getParentFile(), takenDate, f);
+					return new NewFile(outputDateFormat.format(takenDate), extension, f.getParentFile(), takenDate, f);
 				}
 			}
 		}
