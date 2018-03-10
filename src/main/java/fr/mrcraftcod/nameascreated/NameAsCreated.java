@@ -4,6 +4,7 @@ import com.drew.imaging.ImageMetadataReader;
 import com.drew.imaging.ImageProcessingException;
 import com.drew.metadata.Metadata;
 import com.drew.metadata.exif.ExifSubIFDDirectory;
+import com.drew.metadata.mp4.Mp4Directory;
 import fr.mrcraftcod.utils.base.Log;
 import java.io.File;
 import java.io.IOException;
@@ -155,6 +156,30 @@ public class NameAsCreated
 				if(directory != null)
 				{
 					Date takenDate = directory.getDate(ExifSubIFDDirectory.TAG_DATETIME_ORIGINAL);
+					if(log)
+					{
+						System.out.println("Matched");
+					}
+					return new NewFile(outputDateFormat.format(takenDate), extension, f.getParentFile(), takenDate, f);
+				}
+			}
+		}
+		catch(ImageProcessingException e)
+		{
+			e.printStackTrace();
+		}
+		
+		try
+		{
+			if(log)
+				System.out.format("Trying MP4\n");
+			Metadata metadata = ImageMetadataReader.readMetadata(f);
+			if(metadata != null)
+			{
+				Mp4Directory directory = metadata.getFirstDirectoryOfType(Mp4Directory.class);
+				if(directory != null)
+				{
+					Date takenDate = directory.getDate(Mp4Directory.TAG_CREATION_TIME);
 					if(log)
 					{
 						System.out.println("Matched");
