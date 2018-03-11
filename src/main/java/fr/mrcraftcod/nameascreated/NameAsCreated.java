@@ -159,8 +159,14 @@ public class NameAsCreated
 					{
 						System.out.println("Matched");
 					}
-					if(takenDate != null)
-						return new NewFile(outputDateFormat.format(takenDate), extension, f.getParentFile(), takenDate, f);
+					
+					Calendar parsedCal = Calendar.getInstance();
+					
+					parsedCal.setTime(takenDate);
+					if(parsedCal.get(Calendar.YEAR) < 1970)
+						throw new ParseException("Invalid year", 0);
+					
+					return new NewFile(outputDateFormat.format(takenDate), extension, f.getParentFile(), takenDate, f);
 				}
 			}
 		}
@@ -184,6 +190,13 @@ public class NameAsCreated
 					{
 						System.out.println("Matched");
 					}
+					
+					Calendar parsedCal = Calendar.getInstance();
+					
+					parsedCal.setTime(takenDate);
+					if(parsedCal.get(Calendar.YEAR) < 1970)
+						throw new ParseException("Invalid year", 0);
+					
 					return new NewFile(outputDateFormat.format(takenDate), extension, f.getParentFile(), takenDate, f);
 				}
 			}
