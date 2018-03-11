@@ -1,7 +1,6 @@
 package fr.mrcraftcod.nameascreated;
 
 import com.drew.imaging.ImageMetadataReader;
-import com.drew.imaging.ImageProcessingException;
 import com.drew.metadata.Metadata;
 import com.drew.metadata.exif.ExifSubIFDDirectory;
 import com.drew.metadata.mp4.Mp4Directory;
@@ -117,7 +116,7 @@ public class NameAsCreated
 							System.out.println("Couldn't rename file " + f.getAbsolutePath() + " to " + fileTo.getAbsolutePath() + ", file already exists");
 							continue;
 						}
-						if(!f.renameTo(fileTo))
+						if(false && !f.renameTo(fileTo))
 							System.out.println("Failed to rename " + f.getAbsolutePath());
 						else
 							System.out.println("Renamed " + f.getName() + " to " + fileTo.getName());
@@ -160,11 +159,12 @@ public class NameAsCreated
 					{
 						System.out.println("Matched");
 					}
-					return new NewFile(outputDateFormat.format(takenDate), extension, f.getParentFile(), takenDate, f);
+					if(takenDate != null)
+						return new NewFile(outputDateFormat.format(takenDate), extension, f.getParentFile(), takenDate, f);
 				}
 			}
 		}
-		catch(ImageProcessingException e)
+		catch(Exception e)
 		{
 			e.printStackTrace();
 		}
@@ -188,7 +188,7 @@ public class NameAsCreated
 				}
 			}
 		}
-		catch(ImageProcessingException e)
+		catch(Exception e)
 		{
 			e.printStackTrace();
 		}
@@ -216,6 +216,10 @@ public class NameAsCreated
 			}
 			catch(ParseException ignored)
 			{
+			}
+			catch(Exception e)
+			{
+				e.printStackTrace();
 			}
 		}
 		
