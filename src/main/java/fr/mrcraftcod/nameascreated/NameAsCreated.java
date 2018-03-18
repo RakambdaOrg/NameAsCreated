@@ -1,8 +1,10 @@
 package fr.mrcraftcod.nameascreated;
 
 import com.drew.imaging.ImageMetadataReader;
+import com.drew.metadata.Directory;
 import com.drew.metadata.Metadata;
 import com.drew.metadata.exif.ExifSubIFDDirectory;
+import com.drew.metadata.mov.QuickTimeDirectory;
 import com.drew.metadata.mp4.Mp4Directory;
 import fr.mrcraftcod.utils.base.Log;
 import java.io.File;
@@ -144,60 +146,42 @@ public class NameAsCreated
 		Calendar currentCal = Calendar.getInstance();
 		currentCal.setTime(date);
 		
-		try
-		{
-			if(log)
-				System.out.format("Trying EXIF\n");
-			Metadata metadata = ImageMetadataReader.readMetadata(f);
-			if(metadata != null)
-			{
-				ExifSubIFDDirectory directory = metadata.getFirstDirectoryOfType(ExifSubIFDDirectory.class);
-				if(directory != null)
-				{
-					Date takenDate = directory.getDate(ExifSubIFDDirectory.TAG_DATETIME_ORIGINAL);
-					if(log)
-					{
-						System.out.println("Matched");
-					}
-					
-					Calendar parsedCal = Calendar.getInstance();
-					
-					parsedCal.setTime(takenDate);
-					if(parsedCal.get(Calendar.YEAR) < 1970)
-						throw new ParseException("Invalid year", 0);
-					
-					return new NewFile(outputDateFormat.format(takenDate), extension, f.getParentFile(), takenDate, f);
-				}
-			}
-		}
-		catch(Exception e)
-		{
-			e.printStackTrace();
-		}
+		HashMap<Class, Integer> tags = new HashMap<>();
+		tags.put(ExifSubIFDDirectory.class, ExifSubIFDDirectory.TAG_DATETIME_ORIGINAL);
+		tags.put(Mp4Directory.class, Mp4Directory.TAG_CREATION_TIME);
+		tags.put(QuickTimeDirectory.class, QuickTimeDirectory.TAG_CREATION_TIME);
 		
 		try
 		{
-			if(log)
-				System.out.format("Trying MP4\n");
 			Metadata metadata = ImageMetadataReader.readMetadata(f);
 			if(metadata != null)
 			{
-				Mp4Directory directory = metadata.getFirstDirectoryOfType(Mp4Directory.class);
-				if(directory != null)
+				try
 				{
-					Date takenDate = directory.getDate(Mp4Directory.TAG_CREATION_TIME);
-					if(log)
+					for(Class c : tags.keySet())
 					{
-						System.out.println("Matched");
+						if(log)
+							System.out.format("Trying %s\n", c.getName());
+						Directory directory = metadata.getFirstDirectoryOfType(c);
+						if(directory != null)
+						{
+							Date takenDate = directory.getDate(tags.get(c));
+							if(log)
+								System.out.println("Matched");
+							
+							Calendar parsedCal = Calendar.getInstance();
+							
+							parsedCal.setTime(takenDate);
+							if(parsedCal.get(Calendar.YEAR) < 1970)
+								throw new ParseException("Invalid year", 0);
+							
+							return new NewFile(outputDateFormat.format(takenDate), extension, f.getParentFile(), takenDate, f);
+						}
 					}
-					
-					Calendar parsedCal = Calendar.getInstance();
-					
-					parsedCal.setTime(takenDate);
-					if(parsedCal.get(Calendar.YEAR) < 1970)
-						throw new ParseException("Invalid year", 0);
-					
-					return new NewFile(outputDateFormat.format(takenDate), extension, f.getParentFile(), takenDate, f);
+				}
+				catch(Exception e)
+				{
+					e.printStackTrace();
 				}
 			}
 		}
