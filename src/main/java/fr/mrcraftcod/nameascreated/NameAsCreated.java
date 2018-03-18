@@ -166,6 +166,8 @@ public class NameAsCreated
 						if(directory != null)
 						{
 							Date takenDate = directory.getDate(tags.get(c));
+							if(takenDate == null)
+								continue;
 							if(log)
 								System.out.println("Matched");
 							
