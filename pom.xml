@@ -6,7 +6,7 @@
 
     <groupId>fr.mrcraftcod</groupId>
     <artifactId>NAS</artifactId>
-    <version>3.0</version>
+    <version>4.0</version>
 
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
@@ -117,9 +117,9 @@
     </repositories>
     <dependencies>
         <dependency>
-            <groupId>mrcraftcod</groupId>
-            <artifactId>utils.base</artifactId>
-            <version>2.0.1</version>
+            <groupId>fr.mrcraftcod</groupId>
+            <artifactId>utils.http</artifactId>
+            <version>3.0.0</version>
         </dependency>
         <dependency>
             <groupId>com.drewnoakes</groupId>

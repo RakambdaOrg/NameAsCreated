@@ -7,6 +7,7 @@
 module fr.mrcraftcod.nameascreated {
 	exports fr.mrcraftcod.nameascreated;
 	
-	requires transitive fr.mrcraftcod.utils.base;
+	requires transitive fr.mrcraftcod.utils.http;
 	requires metadata.extractor;
+	requires json;
 }
