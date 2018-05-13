@@ -8,12 +8,15 @@ import com.drew.metadata.exif.ExifSubIFDDirectory;
 import com.drew.metadata.exif.GpsDirectory;
 import com.drew.metadata.file.FileSystemDirectory;
 import com.drew.metadata.mov.QuickTimeDirectory;
+import com.drew.metadata.mov.metadata.QuickTimeMetadataDirectory;
 import com.drew.metadata.mp4.Mp4Directory;
 import com.mashape.unirest.http.JsonNode;
 import fr.mrcraftcod.utils.base.Log;
 import fr.mrcraftcod.utils.http.RequestHandler;
 import fr.mrcraftcod.utils.http.requestssenders.get.JSONGetRequestSender;
 import org.json.JSONObject;
+import us.fatehi.pointlocation6709.PointLocation;
+import us.fatehi.pointlocation6709.parse.PointLocationParser;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
@@ -21,7 +24,7 @@ import java.nio.file.Paths;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
-import java.time.ZoneId;
+import java.time.*;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -181,17 +184,15 @@ public class NameAsCreated
 									if(!maybeZoneId.isPresent())
 									{
 										GeoLocation location = gpsDirectory.getGeoLocation();
-										RequestHandler<JsonNode> result = new JSONGetRequestSender("http://api.geonames.org/timezoneJSON?lat=" + location.getLatitude() + "&lng=" + location.getLongitude() + "&username=mrcraftcod").getRequestHandler();
-										if(result.getStatus() == 200)
-										{
-											JsonNode root = result.getRequestResult();
-											if(root != null)
-											{
-												JSONObject rootObj = root.getObject();
-												if(rootObj.has("timezoneId"))
-													maybeZoneId = Optional.ofNullable(ZoneId.of(rootObj.getString("timezoneId")));
-											}
-										}
+										maybeZoneId = Optional.ofNullable(getZoneID(location.getLatitude(), location.getLongitude()));
+									}
+								}
+								for(QuickTimeMetadataDirectory gpsDirectory : metadata.getDirectoriesOfType(QuickTimeMetadataDirectory.class))
+								{
+									if(!maybeZoneId.isPresent())
+									{
+										PointLocation location = PointLocationParser.parsePointLocation(gpsDirectory.getString(0x050D));
+										maybeZoneId = Optional.ofNullable(getZoneID(location.getLatitude().getDegrees(), location.getLongitude().getDegrees()));
 									}
 								}
 							}
@@ -199,7 +200,9 @@ public class NameAsCreated
 							{
 								e.printStackTrace();
 							}
-							Date takenDate = directory.getDate(tags.get(c));
+							ZoneId zoneID = maybeZoneId.orElse(ZoneId.systemDefault());
+							TimeZone timeZone = TimeZone.getTimeZone(zoneID);
+							Date takenDate = directory.getDate(tags.get(c), timeZone);
 							if(takenDate == null)
 								continue;
 							if(log)
@@ -218,13 +221,13 @@ public class NameAsCreated
 								e.printStackTrace();
 							}
 							
-							Calendar parsedCal = Calendar.getInstance();
-							
+							Calendar parsedCal = Calendar.getInstance(timeZone);
 							parsedCal.setTime(takenDate);
 							if(parsedCal.get(Calendar.YEAR) < 1970)
 								throw new ParseException("Invalid year", 0);
 							
-							return new NewFile(outputDateFormat.format(takenDate), extension, f.getParentFile(), takenDate, f);
+							ZonedDateTime dateTime = LocalDateTime.ofEpochSecond(parsedCal.getTimeInMillis() / 1000, 0, zoneID.getRules().getOffset(Instant.now())).atZone(ZoneId.systemDefault());
+							return new NewFile(outputDateFormat.format(Date.from(dateTime.toInstant())), extension, f.getParentFile(), takenDate, f);
 						}
 					}
 				}
@@ -284,5 +287,28 @@ public class NameAsCreated
 		//	parsedCal.set(CAL_YEAR, parsedCal.get(CAL_YEAR) - 1);
 		
 		return new NewFile(prefix + outputDateFormat.format(parsedCal.getTime()), extension, f.getParentFile(), date, f);
+	}
+	
+	private static ZoneId getZoneID(double latitude, double longitude)
+	{
+		try
+		{
+			RequestHandler<JsonNode> result = new JSONGetRequestSender("http://api.geonames.org/timezoneJSON?lat=" + latitude + "&lng=" + longitude + "&username=mrcraftcod").getRequestHandler();
+			if(result.getStatus() == 200)
+			{
+				JsonNode root = result.getRequestResult();
+				if(root != null)
+				{
+					JSONObject rootObj = root.getObject();
+					if(rootObj.has("timezoneId"))
+						return ZoneId.of(rootObj.getString("timezoneId"));
+				}
+			}
+		}
+		catch(Exception e)
+		{
+			e.printStackTrace();
+		}
+		return null;
 	}
 }

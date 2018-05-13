@@ -10,4 +10,5 @@ module fr.mrcraftcod.nameascreated {
 	requires transitive fr.mrcraftcod.utils.http;
 	requires metadata.extractor;
 	requires json;
+	requires pointlocation6709;
 }
