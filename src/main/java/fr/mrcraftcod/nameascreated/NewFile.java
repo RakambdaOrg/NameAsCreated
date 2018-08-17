@@ -26,7 +26,7 @@ class NewFile
 		this.source = source;
 	}
 	
-	String getName(final File file)
+	public String getName(final File file)
 	{
 		if(file == null || (name + extension).equalsIgnoreCase(file.getName()))
 			return name + extension;
@@ -38,22 +38,22 @@ class NewFile
 		return name + " " + i + extension;
 	}
 	
-	Date getDate()
+	public Date getDate()
 	{
 		return date;
 	}
 	
-	String getExtension()
+	public String getExtension()
 	{
 		return extension;
 	}
 	
-	File getParent()
+	public File getParent()
 	{
 		return parent;
 	}
 	
-	File getSource()
+	public File getSource()
 	{
 		return source;
 	}
