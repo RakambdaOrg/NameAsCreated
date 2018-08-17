@@ -177,7 +177,7 @@ public class NameAsCreated{
 							if(takenDate == null){
 								continue;
 							}
-							LOGGER.info("Matched");
+							LOGGER.info("Matched directory {} for {}", directory, name);
 							
 							try{
 								for(final var fileDirectory : metadata.getDirectoriesOfType(FileSystemDirectory.class)){
@@ -202,12 +202,12 @@ public class NameAsCreated{
 					}
 				}
 				catch(final Exception e){
-					LOGGER.error("Error processing directories", e);
+					LOGGER.error("Error processing directories for {}", name, e);
 				}
 			}
 		}
 		catch(final Exception e){
-			LOGGER.error("Error processing metadata", e);
+			LOGGER.error("Error processing metadata for {}", name, e);
 		}
 		
 		for(final var sdf : formats){
@@ -226,7 +226,7 @@ public class NameAsCreated{
 				}
 				
 				date = parsedCal.getTime();
-				LOGGER.debug("Matched date format");
+				LOGGER.debug("Matched date format for {}", name);
 				return new NewFile(outputDateFormat.format(date), extension, f.getParentFile(), date, f);
 			}
 			catch(final ParseException ignored){
