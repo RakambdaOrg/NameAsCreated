@@ -9,7 +9,7 @@ import java.util.Date;
  * @author Thomas Couchoud
  * @since 2017-08-12
  */
-class NewFile
+public class NewFile
 {
 	private final String name;
 	private final String extension;
