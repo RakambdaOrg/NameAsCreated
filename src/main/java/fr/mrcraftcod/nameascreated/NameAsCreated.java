@@ -131,7 +131,7 @@ public class NameAsCreated{
 		}
 	}
 	
-	private static NewFile buildName(final File f) throws IOException{
+	public static NewFile buildName(final File f) throws IOException{
 		final var prefix = "";
 		final var extension = f.getName().substring(f.getName().lastIndexOf('.'));
 		final var name = f.getName().substring(0, f.getName().lastIndexOf('.'));
