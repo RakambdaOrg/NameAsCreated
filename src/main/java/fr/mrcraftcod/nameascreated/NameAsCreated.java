@@ -236,7 +236,7 @@ public class NameAsCreated{
 			}
 		}
 		
-		LOGGER.warn("Unrecognized file format : {}", name);
+		LOGGER.warn("Unrecognized date format : {}, using file last modified time", name);
 		
 		final var parsedCal = Calendar.getInstance();
 		
