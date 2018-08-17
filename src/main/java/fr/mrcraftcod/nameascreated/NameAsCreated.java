@@ -1,21 +1,16 @@
 package fr.mrcraftcod.nameascreated;
 
 import com.drew.imaging.ImageMetadataReader;
-import com.drew.lang.GeoLocation;
 import com.drew.metadata.Directory;
-import com.drew.metadata.Metadata;
 import com.drew.metadata.exif.ExifSubIFDDirectory;
 import com.drew.metadata.exif.GpsDirectory;
 import com.drew.metadata.file.FileSystemDirectory;
 import com.drew.metadata.mov.QuickTimeDirectory;
 import com.drew.metadata.mov.metadata.QuickTimeMetadataDirectory;
 import com.drew.metadata.mp4.Mp4Directory;
-import com.mashape.unirest.http.JsonNode;
-import fr.mrcraftcod.utils.base.Log;
-import fr.mrcraftcod.utils.http.RequestHandler;
 import fr.mrcraftcod.utils.http.requestssenders.get.JSONGetRequestSender;
-import org.json.JSONObject;
-import us.fatehi.pointlocation6709.PointLocation;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import us.fatehi.pointlocation6709.parse.PointLocationParser;
 import java.io.File;
 import java.io.IOException;
@@ -24,7 +19,9 @@ import java.nio.file.Paths;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
-import java.time.*;
+import java.time.Instant;
+import java.time.LocalDateTime;
+import java.time.ZoneId;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -34,8 +31,8 @@ import java.util.stream.Collectors;
  * @author Thomas Couchoud
  * @since 2017-01-23
  */
-public class NameAsCreated
-{
+public class NameAsCreated{
+	private static final Logger LOGGER = LoggerFactory.getLogger(NameAsCreated.class);
 	private static final SimpleDateFormat outputDateFormat = new SimpleDateFormat("yyyy-MM-dd HH.mm.ss");
 	private static final SimpleDateFormat[] formats = {
 			new SimpleDateFormat("yyyy-MM-dd HH.mm.ss", Locale.ENGLISH),
@@ -51,237 +48,204 @@ public class NameAsCreated
 			new SimpleDateFormat("dd MMM yyy, hh:mm:ss", Locale.ENGLISH)
 	};
 	
-	public static void main(String[] args)
-	{
-		LinkedList<String> argsList = new LinkedList<>();
-		argsList.addAll(Arrays.asList(args));
+	public static void main(final String[] args){
+		final var argsList = new LinkedList<>(Arrays.asList(args));
 		
-		if(argsList.peek().equals("-n"))
-		{
-			argsList.pop();
-			renameCount(argsList);
+		switch(Objects.requireNonNull(argsList.peek())){
+			case "-n":
+				argsList.pop();
+				renameCount(argsList);
+				break;
+			case "-r":
+				argsList.pop();
+				renameDate(listFiles(new File(Objects.requireNonNull(argsList.peek()))));
+				break;
+			default:
+				renameDate(argsList);
+				break;
 		}
-		else if(argsList.peek().equals("-r"))
-		{
-			argsList.pop();
-			renameDate(listFiles(new File(argsList.peek())));
-		}
-		else
-			renameDate(argsList);
 	}
 	
-	private static LinkedList<String> listFiles(File folder)
-	{
-		LinkedList<String> files = new LinkedList<>();
-		for(File file : folder.listFiles())
-		{
-			if(file.isDirectory())
+	private static LinkedList<String> listFiles(final File folder){
+		final LinkedList<String> files = new LinkedList<>();
+		for(final var file : Objects.requireNonNull(folder.listFiles())){
+			if(file.isDirectory()){
 				files.addAll(listFiles(file));
-			else
+			}
+			else{
 				files.add(file.getAbsolutePath());
+			}
 		}
 		return files;
 	}
 	
-	private static void renameCount(LinkedList<String> args)
-	{
-		int i = 0;
-		if(args.peek().equals("-s"))
-		{
+	private static void renameCount(final LinkedList<String> args){
+		var i = 0;
+		if(Objects.requireNonNull(args.peek()).equals("-s")){
 			args.pop();
 			i = Integer.parseInt(args.pop()) - 1;
 		}
-		List<NewFile> files = args.stream().map(name -> {
-			try
-			{
-				return buildName(new File(name), true);
+		final var files = args.stream().map(name -> {
+			try{
+				return buildName(new File(name));
 			}
-			catch(IOException e)
-			{
-				e.printStackTrace();
+			catch(IOException e){
+				LOGGER.error("Error building name", e);
 			}
 			return null;
-		}).sorted(Comparator.comparing(NewFile::getDate)).collect(Collectors.toList());
-		Iterator<NewFile> filesIterator = files.iterator();
-		while(filesIterator.hasNext())
-		{
-			NewFile newFile = filesIterator.next();
+		}).filter(Objects::nonNull).sorted(Comparator.comparing(NewFile::getDate)).collect(Collectors.toList());
+		for(final var newFile : files){
 			newFile.getSource().renameTo(new File(newFile.getParent(), ++i + newFile.getExtension()));
 		}
 	}
 	
-	private static void renameDate(LinkedList<String> args)
-	{
-		for(String arg : args)
-		{
-			try
-			{
-				File f = new File(arg);
-				if(f.exists() && f.isFile() && f.getName().contains(".") && !f.getName().startsWith("."))
-				{
-					try
-					{
-						File fileTo = new File(f.getParentFile(), buildName(f, true).getName(f));
-						if(fileTo.getName().equals(f.getName()))
-							continue;
-						if(fileTo.exists())
-						{
-							System.out.println("Couldn't rename file " + f.getAbsolutePath() + " to " + fileTo.getAbsolutePath() + ", file already exists");
+	private static void renameDate(final LinkedList<String> args){
+		for(final var arg : args){
+			try{
+				final var f = new File(arg);
+				if(f.exists() && f.isFile() && f.getName().contains(".") && !f.getName().startsWith(".")){
+					try{
+						final var fileTo = new File(f.getParentFile(), buildName(f).getName(f));
+						if(fileTo.getName().equals(f.getName())){
 							continue;
 						}
-						if(!f.renameTo(fileTo))
-							System.out.println("Failed to rename " + f.getAbsolutePath());
-						else
-							System.out.println("Renamed " + f.getName() + " to " + fileTo.getName());
+						if(fileTo.exists()){
+							LOGGER.warn("Couldn't rename file {} to {}, file already exists", f.getAbsolutePath(), fileTo.getAbsolutePath());
+							continue;
+						}
+						if(!f.renameTo(fileTo)){
+							LOGGER.error("Failed to rename {}", f.getAbsolutePath());
+						}
+						else{
+							LOGGER.info("Renamed {} to {}", f.getName(), fileTo.getName());
+						}
 					}
-					catch(Exception e)
-					{
-						System.out.println("Error renaming file " + f.getAbsolutePath() + " -> " + e.getMessage());
+					catch(final Exception e){
+						LOGGER.error("Error renaming file {}", f.getAbsolutePath(), e.getMessage());
 					}
 				}
 			}
-			catch(Exception e)
-			{
-				e.printStackTrace();
+			catch(final Exception e){
+				LOGGER.error("Error processing file {}", arg, e);
 			}
 		}
 	}
 	
-	public static NewFile buildName(File f, boolean log) throws IOException
-	{
-		String prefix = "";
-		String extension = f.getName().substring(f.getName().lastIndexOf('.'));
-		String name = f.getName().substring(0, f.getName().lastIndexOf('.'));
-		BasicFileAttributes attr = Files.readAttributes(Paths.get(f.toURI()), BasicFileAttributes.class);
-		Date date = new Date(attr.lastModifiedTime().toMillis());
-		Calendar currentCal = Calendar.getInstance();
+	private static NewFile buildName(final File f) throws IOException{
+		final var prefix = "";
+		final var extension = f.getName().substring(f.getName().lastIndexOf('.'));
+		final var name = f.getName().substring(0, f.getName().lastIndexOf('.'));
+		final var attr = Files.readAttributes(Paths.get(f.toURI()), BasicFileAttributes.class);
+		var date = new Date(attr.lastModifiedTime().toMillis());
+		final var currentCal = Calendar.getInstance();
 		currentCal.setTime(date);
 		
-		HashMap<Class, Integer> tags = new HashMap<>();
+		final HashMap<Class<? extends Directory>, Integer> tags = new HashMap<>();
 		tags.put(ExifSubIFDDirectory.class, ExifSubIFDDirectory.TAG_DATETIME_ORIGINAL);
 		tags.put(Mp4Directory.class, Mp4Directory.TAG_CREATION_TIME);
 		tags.put(QuickTimeDirectory.class, QuickTimeDirectory.TAG_CREATION_TIME);
 		
-		try
-		{
-			Metadata metadata = ImageMetadataReader.readMetadata(f);
-			if(metadata != null)
-			{
-				try
-				{
-					for(Class c : tags.keySet())
-					{
-						if(log)
-							System.out.format("Trying %s\n", c.getName());
-						Directory directory = metadata.getFirstDirectoryOfType(c);
-						if(directory != null)
-						{
+		try{
+			final var metadata = ImageMetadataReader.readMetadata(f);
+			if(metadata != null){
+				try{
+					for(final var c : tags.keySet()){
+						LOGGER.debug("Trying {}", c.getName());
+						final var directory = metadata.getFirstDirectoryOfType(c);
+						if(directory != null){
 							Optional<ZoneId> maybeZoneId = Optional.empty();
-							try
-							{
-								for(GpsDirectory gpsDirectory : metadata.getDirectoriesOfType(GpsDirectory.class))
-								{
-									if(!maybeZoneId.isPresent())
-									{
-										GeoLocation location = gpsDirectory.getGeoLocation();
+							try{
+								for(final var gpsDirectory : metadata.getDirectoriesOfType(GpsDirectory.class)){
+									if(!maybeZoneId.isPresent()){
+										final var location = gpsDirectory.getGeoLocation();
 										maybeZoneId = Optional.ofNullable(getZoneID(location.getLatitude(), location.getLongitude()));
 									}
 								}
-								for(QuickTimeMetadataDirectory gpsDirectory : metadata.getDirectoriesOfType(QuickTimeMetadataDirectory.class))
-								{
-									if(!maybeZoneId.isPresent())
-									{
-										PointLocation location = PointLocationParser.parsePointLocation(gpsDirectory.getString(0x050D));
+								for(final var gpsDirectory : metadata.getDirectoriesOfType(QuickTimeMetadataDirectory.class)){
+									if(!maybeZoneId.isPresent()){
+										final var location = PointLocationParser.parsePointLocation(gpsDirectory.getString(0x050D));
 										maybeZoneId = Optional.ofNullable(getZoneID(location.getLatitude().getDegrees(), location.getLongitude().getDegrees()));
 									}
 								}
 							}
-							catch(Exception e)
-							{
-								e.printStackTrace();
+							catch(final Exception e){
+								LOGGER.warn("Error getting GPS infos", e);
 							}
-							ZoneId zoneID = maybeZoneId.orElse(ZoneId.systemDefault());
-							TimeZone timeZone = TimeZone.getTimeZone(zoneID);
-							Date takenDate = directory.getDate(tags.get(c), timeZone);
-							if(takenDate == null)
+							final var zoneID = maybeZoneId.orElse(ZoneId.systemDefault());
+							final var timeZone = TimeZone.getTimeZone(zoneID);
+							var takenDate = directory.getDate(tags.get(c), timeZone);
+							if(takenDate == null){
 								continue;
-							if(log)
-								System.out.println("Matched");
+							}
+							LOGGER.info("Matched");
 							
-							try
-							{
-								for(FileSystemDirectory fileDirectory : metadata.getDirectoriesOfType(FileSystemDirectory.class))
-								{
-									if(fileDirectory.getDate(FileSystemDirectory.TAG_FILE_MODIFIED_DATE).before(takenDate))
+							try{
+								for(final var fileDirectory : metadata.getDirectoriesOfType(FileSystemDirectory.class)){
+									if(fileDirectory.getDate(FileSystemDirectory.TAG_FILE_MODIFIED_DATE).before(takenDate)){
 										takenDate = fileDirectory.getDate(FileSystemDirectory.TAG_FILE_MODIFIED_DATE);
+									}
 								}
 							}
-							catch(Exception e)
-							{
-								e.printStackTrace();
+							catch(final Exception e){
+								LOGGER.warn("Error getting taken date", e);
 							}
 							
-							Calendar parsedCal = Calendar.getInstance(timeZone);
+							final var parsedCal = Calendar.getInstance(timeZone);
 							parsedCal.setTime(takenDate);
-							if(parsedCal.get(Calendar.YEAR) < 1970)
+							if(parsedCal.get(Calendar.YEAR) < 1970){
 								throw new ParseException("Invalid year", 0);
+							}
 							
-							ZonedDateTime dateTime = LocalDateTime.ofEpochSecond(parsedCal.getTimeInMillis() / 1000, 0, zoneID.getRules().getOffset(Instant.now())).atZone(ZoneId.systemDefault());
+							final var dateTime = LocalDateTime.ofEpochSecond(parsedCal.getTimeInMillis() / 1000, 0, zoneID.getRules().getOffset(Instant.now())).atZone(ZoneId.systemDefault());
 							return new NewFile(outputDateFormat.format(Date.from(dateTime.toInstant())), extension, f.getParentFile(), takenDate, f);
 						}
 					}
 				}
-				catch(Exception e)
-				{
-					e.printStackTrace();
+				catch(final Exception e){
+					LOGGER.error("Error processing directories", e);
 				}
 			}
 		}
-		catch(Exception e)
-		{
-			e.printStackTrace();
+		catch(final Exception e){
+			LOGGER.error("Error processing metadata", e);
 		}
 		
-		for(SimpleDateFormat sdf : formats)
-		{
-			try
-			{
-				if(log)
-					System.out.format("Trying format `%s`\n", sdf.toPattern());
-				Date cdate = sdf.parse(name);
+		for(final var sdf : formats){
+			try{
+				LOGGER.debug("Trying format `{}`", sdf.toPattern());
+				final var cdate = sdf.parse(name);
 				
-				Calendar parsedCal = Calendar.getInstance();
+				final var parsedCal = Calendar.getInstance();
 				
 				parsedCal.setTime(cdate);
-				if(parsedCal.get(Calendar.YEAR) < 1970)
+				if(parsedCal.get(Calendar.YEAR) < 1970){
 					throw new ParseException("Invalid year", 0);
-				if(parsedCal.get(Calendar.YEAR) == 1970)
+				}
+				if(parsedCal.get(Calendar.YEAR) == 1970){
 					parsedCal.set(Calendar.YEAR, currentCal.get(Calendar.YEAR));
+				}
 				
 				date = parsedCal.getTime();
-				if(log)
-					System.out.println("Matched");
+				LOGGER.debug("Matched date format");
 				return new NewFile(outputDateFormat.format(date), extension, f.getParentFile(), date, f);
 			}
-			catch(ParseException ignored)
-			{
+			catch(final ParseException ignored){
 			}
-			catch(Exception e)
-			{
-				e.printStackTrace();
+			catch(final Exception e){
+				LOGGER.error("Error using format {}", sdf, e);
 			}
 		}
 		
-		if(log)
-			Log.warning("Unrecognized file format : " + name);
+		LOGGER.warn("Unrecognized file format : {}", name);
 		
-		Calendar parsedCal = Calendar.getInstance();
+		final var parsedCal = Calendar.getInstance();
 		
-		int CAL_YEAR = Calendar.YEAR;
+		final var CAL_YEAR = Calendar.YEAR;
 		
 		parsedCal.setTime(date);
-		if(parsedCal.get(CAL_YEAR) <= 1970)
+		if(parsedCal.get(CAL_YEAR) <= 1970){
 			parsedCal.set(CAL_YEAR, currentCal.get(CAL_YEAR));
+		}
 		
 		//if(parsedCal.after(currentCal))
 		//	parsedCal.set(CAL_YEAR, parsedCal.get(CAL_YEAR) - 1);
@@ -289,25 +253,21 @@ public class NameAsCreated
 		return new NewFile(prefix + outputDateFormat.format(parsedCal.getTime()), extension, f.getParentFile(), date, f);
 	}
 	
-	private static ZoneId getZoneID(double latitude, double longitude)
-	{
-		try
-		{
-			RequestHandler<JsonNode> result = new JSONGetRequestSender("http://api.geonames.org/timezoneJSON?lat=" + latitude + "&lng=" + longitude + "&username=mrcraftcod").getRequestHandler();
-			if(result.getStatus() == 200)
-			{
-				JsonNode root = result.getRequestResult();
-				if(root != null)
-				{
-					JSONObject rootObj = root.getObject();
-					if(rootObj.has("timezoneId"))
+	private static ZoneId getZoneID(final double latitude, final double longitude){
+		try{
+			final var result = new JSONGetRequestSender("http://api.geonames.org/timezoneJSON?lat=" + latitude + "&lng=" + longitude + "&username=mrcraftcod").getRequestHandler();
+			if(result.getStatus() == 200){
+				final var root = result.getRequestResult();
+				if(root != null){
+					final var rootObj = root.getObject();
+					if(rootObj.has("timezoneId")){
 						return ZoneId.of(rootObj.getString("timezoneId"));
+					}
 				}
 			}
 		}
-		catch(Exception e)
-		{
-			e.printStackTrace();
+		catch(final Exception e){
+			LOGGER.error("Error getting zoneID for coordinates {};{}", latitude, longitude, e);
 		}
 		return null;
 	}
