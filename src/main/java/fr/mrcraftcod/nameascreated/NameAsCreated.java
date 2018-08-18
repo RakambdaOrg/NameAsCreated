@@ -177,7 +177,7 @@ public class NameAsCreated{
 							if(takenDate == null){
 								continue;
 							}
-							LOGGER.info("Matched directory {} for {}", directory, name);
+							LOGGER.info("Matched directory {} for {}{}", directory, name, extension);
 							
 							try{
 								for(final var fileDirectory : metadata.getDirectoriesOfType(FileSystemDirectory.class)){
@@ -202,12 +202,12 @@ public class NameAsCreated{
 					}
 				}
 				catch(final Exception e){
-					LOGGER.error("Error processing directories for {}", name, e);
+					LOGGER.error("Error processing directories for {}{}", name, extension, e);
 				}
 			}
 		}
 		catch(final Exception e){
-			LOGGER.error("Error processing metadata for {}", name, e);
+			LOGGER.error("Error processing metadata for {}{}", name, extension, e);
 		}
 		
 		for(final var sdf : formats){
@@ -226,7 +226,7 @@ public class NameAsCreated{
 				}
 				
 				date = parsedCal.getTime();
-				LOGGER.debug("Matched date format for {}", name);
+				LOGGER.debug("Matched date format for {}{}", name, extension);
 				return new NewFile(outputDateFormat.format(date), extension, f.getParentFile(), date, f);
 			}
 			catch(final ParseException ignored){
@@ -236,7 +236,7 @@ public class NameAsCreated{
 			}
 		}
 		
-		LOGGER.warn("Unrecognized date format : {}, using file last modified time", name);
+		LOGGER.warn("Unrecognized date format : {}{}, using file last modified time", name, extension);
 		
 		final var parsedCal = Calendar.getInstance();
 		
