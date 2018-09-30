@@ -6,11 +6,11 @@
 
     <groupId>fr.mrcraftcod</groupId>
     <artifactId>NameAsCreated</artifactId>
-    <version>6.0</version>
+    <version>6.1</version>
 
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <java.version>10</java.version>
+        <java.version>11</java.version>
         <main.class>fr.mrcraftcod.nameascreated.NameAsCreated</main.class>
     </properties>
     <packaging>jar</packaging>
@@ -119,7 +119,7 @@
         <dependency>
             <groupId>fr.mrcraftcod</groupId>
             <artifactId>utils.http</artifactId>
-            <version>4.1.0</version>
+            <version>4.2.0</version>
         </dependency>
         <dependency>
             <groupId>com.drewnoakes</groupId>
@@ -130,6 +130,12 @@
             <groupId>us.fatehi</groupId>
             <artifactId>pointlocation6709</artifactId>
             <version>4.1</version>
+        </dependency>
+        <!-- https://mvnrepository.com/artifact/org.openjfx/javafx-controls -->
+        <dependency>
+            <groupId>org.openjfx</groupId>
+            <artifactId>javafx-controls</artifactId>
+            <version>11</version>
         </dependency>
     </dependencies>
 </project>

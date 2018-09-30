@@ -10,8 +10,11 @@ module fr.mrcraftcod.nameascreated {
 	requires metadata.extractor;
 	requires pointlocation6709;
 	requires slf4j.api;
+	requires org.apache.logging.log4j;
 	requires json;
 	requires unirest.java;
+	requires javafx.base;
+	requires javafx.controls;
 	
 	exports fr.mrcraftcod.nameascreated;
 }
