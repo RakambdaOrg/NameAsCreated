@@ -10,7 +10,8 @@ import java.util.TimeZone;
  * @author Thomas Couchoud
  * @since 2018-09-30
  */
-public interface DateExtractor<T extends Directory>
-{
+public interface DateExtractor<T extends Directory>{
 	Date parse(Directory directory, TimeZone tz);
+	
+	Class<T> getKlass();
 }

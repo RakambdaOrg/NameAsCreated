@@ -18,12 +18,12 @@ public class NewFile
 	private final Date date;
 	private final File source;
 	
-	NewFile(final String name, final String extension, final File parent, final Date filedate, final File source)
+	NewFile(final String name, final String extension, final File parent, final Date fileDate, final File source)
 	{
 		this.parent = parent;
 		this.name = name;
 		this.extension = extension.toLowerCase();
-		this.date = filedate;
+		this.date = fileDate;
 		this.source = source;
 	}
 	

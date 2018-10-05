@@ -1,7 +1,6 @@
 package fr.mrcraftcod.nameascreated;
 
 import com.drew.imaging.ImageMetadataReader;
-import com.drew.metadata.Directory;
 import com.drew.metadata.exif.ExifSubIFDDirectory;
 import com.drew.metadata.exif.GpsDirectory;
 import com.drew.metadata.file.FileSystemDirectory;
@@ -36,6 +35,7 @@ import java.util.stream.Collectors;
  * @since 2017-01-23
  */
 public class NameAsCreated{
+	private static boolean testMode = false;
 	private static final Logger LOGGER = LoggerFactory.getLogger(NameAsCreated.class);
 	private static final SimpleDateFormat outputDateFormat = new SimpleDateFormat("yyyy-MM-dd HH.mm.ss");
 	private static final SimpleDateFormat[] formats = {
@@ -60,6 +60,11 @@ public class NameAsCreated{
 			case "-n":
 				argsList.pop();
 				renameCount(argsList);
+				break;
+			case "-t":
+				argsList.pop();
+				testMode = true;
+				renameDate(argsList);
 				break;
 			case "-r":
 				argsList.pop();
@@ -119,11 +124,11 @@ public class NameAsCreated{
 							LOGGER.warn("Couldn't rename file {} to {}, file already exists", f.getAbsolutePath(), fileTo.getAbsolutePath());
 							continue;
 						}
-						if(!f.renameTo(fileTo)){
-							LOGGER.error("Failed to rename {}", f.getAbsolutePath());
+						if(testMode || f.renameTo(fileTo)){
+							LOGGER.info("Renamed {} to {}", f.getName(), fileTo.getName());
 						}
 						else{
-							LOGGER.info("Renamed {} to {}", f.getName(), fileTo.getName());
+							LOGGER.error("Failed to rename {}", f.getAbsolutePath());
 						}
 					}
 					catch(final Exception e){
@@ -150,11 +155,11 @@ public class NameAsCreated{
 		final var currentCal = Calendar.getInstance();
 		currentCal.setTime(date);
 		
-		final var tags = new HashMap<Class<? extends Directory>, DateExtractor<? extends Directory>>();
-		tags.put(ExifSubIFDDirectory.class, new SimpleDateExtractor<ExifSubIFDDirectory>(ExifSubIFDDirectory.TAG_DATETIME_ORIGINAL));
-		tags.put(Mp4Directory.class, new SimpleDateExtractor<Mp4Directory>(Mp4Directory.TAG_CREATION_TIME));
-		tags.put(QuickTimeDirectory.class, new SimpleDateExtractor<QuickTimeDirectory>(QuickTimeDirectory.TAG_CREATION_TIME));
-		tags.put(XmpDirectory.class, new XmpDateExtractor());
+		final var dataExtractors = new ArrayList<DateExtractor>();
+		dataExtractors.add(new SimpleDateExtractor<>(ExifSubIFDDirectory.class, ExifSubIFDDirectory.TAG_DATETIME_ORIGINAL));
+		dataExtractors.add(new SimpleDateExtractor<>(Mp4Directory.class, Mp4Directory.TAG_CREATION_TIME));
+		dataExtractors.add(new SimpleDateExtractor<>(QuickTimeDirectory.class, QuickTimeDirectory.TAG_CREATION_TIME));
+		dataExtractors.add(new XmpDateExtractor());
 		
 		try{
 			final var metadata = ImageMetadataReader.readMetadata(f);
@@ -194,35 +199,40 @@ public class NameAsCreated{
 					final var zoneID = maybeZoneId.orElse(ZoneId.systemDefault());
 					final var timeZone = TimeZone.getTimeZone(zoneID);
 					
-					for(final var c : tags.keySet()){
-						LOGGER.debug("Trying {}", c.getName());
-						final var directory = metadata.getFirstDirectoryOfType(c);
-						if(directory != null){
-							var takenDate = tags.get(c).parse(directory, timeZone);//directory.getDate(tags.get(c), timeZone);
-							if(takenDate == null){
-								continue;
-							}
-							LOGGER.info("Matched directory {} for {}{}", directory, name, extension);
-							
-							try{
-								for(final var fileDirectory : metadata.getDirectoriesOfType(FileSystemDirectory.class)){
-									if(fileDirectory.getDate(FileSystemDirectory.TAG_FILE_MODIFIED_DATE).before(takenDate)){
-										takenDate = fileDirectory.getDate(FileSystemDirectory.TAG_FILE_MODIFIED_DATE);
+					for(final var dataExtractor : dataExtractors){
+						try{
+							LOGGER.debug("Trying {}", dataExtractor.getKlass().getName());
+							@SuppressWarnings("unchecked") final var directory = metadata.getFirstDirectoryOfType(dataExtractor.getKlass());
+							if(directory != null){
+								var takenDate = dataExtractor.parse(directory, timeZone);//directory.getDate(tags.get(c), timeZone);
+								if(takenDate == null){
+									continue;
+								}
+								LOGGER.info("Matched directory {} for {}{}", directory, name, extension);
+								
+								try{
+									for(final var fileDirectory : metadata.getDirectoriesOfType(FileSystemDirectory.class)){
+										if(fileDirectory.getDate(FileSystemDirectory.TAG_FILE_MODIFIED_DATE).before(takenDate)){
+											takenDate = fileDirectory.getDate(FileSystemDirectory.TAG_FILE_MODIFIED_DATE);
+										}
 									}
 								}
+								catch(final Exception e){
+									LOGGER.warn("Error getting taken date", e);
+								}
+								
+								final var parsedCal = Calendar.getInstance(timeZone);
+								parsedCal.setTime(takenDate);
+								if(parsedCal.get(Calendar.YEAR) < 1970){
+									throw new ParseException("Invalid year", 0);
+								}
+								
+								final var dateTime = parsedCal.getTime();
+								return new NewFile(outputDateFormat.format(Date.from(dateTime.toInstant())), extension, f.getParentFile(), takenDate, f);
 							}
-							catch(final Exception e){
-								LOGGER.warn("Error getting taken date", e);
-							}
-							
-							final var parsedCal = Calendar.getInstance(timeZone);
-							parsedCal.setTime(takenDate);
-							if(parsedCal.get(Calendar.YEAR) < 1970){
-								throw new ParseException("Invalid year", 0);
-							}
-							
-							final var dateTime = parsedCal.getTime();
-							return new NewFile(outputDateFormat.format(Date.from(dateTime.toInstant())), extension, f.getParentFile(), takenDate, f);
+						}
+						catch(final Exception e){
+							LOGGER.error("Error processing directory {} for {}{}", dataExtractor.getKlass().getName(), name, extension, e);
 						}
 					}
 				}

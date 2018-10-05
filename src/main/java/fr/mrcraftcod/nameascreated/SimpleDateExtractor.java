@@ -10,12 +10,12 @@ import java.util.TimeZone;
  * @author Thomas Couchoud
  * @since 2018-09-30
  */
-public class SimpleDateExtractor<T extends Directory> implements DateExtractor<T>
-{
+public class SimpleDateExtractor<T extends Directory> implements DateExtractor<T>{
 	private final int tag;
+	private final Class<T> klass;
 	
-	public SimpleDateExtractor(final int tag)
-	{
+	SimpleDateExtractor(final Class<T> klass, final int tag){
+		this.klass = klass;
 		this.tag = tag;
 	}
 	
@@ -23,5 +23,9 @@ public class SimpleDateExtractor<T extends Directory> implements DateExtractor<T
 	public Date parse(final Directory directory, final TimeZone tz)
 	{
 		return directory.getDate(this.tag, tz);
+	}
+	
+	public Class<T> getKlass(){
+		return klass;
 	}
 }
