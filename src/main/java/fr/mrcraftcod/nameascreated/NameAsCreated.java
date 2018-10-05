@@ -8,9 +8,14 @@ import com.drew.metadata.file.FileSystemDirectory;
 import com.drew.metadata.mov.QuickTimeDirectory;
 import com.drew.metadata.mov.metadata.QuickTimeMetadataDirectory;
 import com.drew.metadata.mp4.Mp4Directory;
+import com.drew.metadata.xmp.XmpDirectory;
 import fr.mrcraftcod.utils.http.requestssenders.get.JSONGetRequestSender;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import us.fatehi.pointlocation6709.Angle;
+import us.fatehi.pointlocation6709.Latitude;
+import us.fatehi.pointlocation6709.Longitude;
+import us.fatehi.pointlocation6709.PointLocation;
 import us.fatehi.pointlocation6709.parse.PointLocationParser;
 import java.io.File;
 import java.io.IOException;
@@ -19,8 +24,6 @@ import java.nio.file.Paths;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
-import java.time.Instant;
-import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.util.*;
 import java.util.regex.Pattern;
@@ -69,7 +72,7 @@ public class NameAsCreated{
 	}
 	
 	private static LinkedList<String> listFiles(final File folder){
-		final var files = new LinkedList<String>();
+		final LinkedList<String> files = new LinkedList<>();
 		for(final var file : Objects.requireNonNull(folder.listFiles())){
 			if(file.isDirectory()){
 				files.addAll(listFiles(file));
@@ -142,7 +145,7 @@ public class NameAsCreated{
 		final var currentCal = Calendar.getInstance();
 		currentCal.setTime(date);
 		
-		final var tags = new HashMap<Class<? extends Directory>, Integer>();
+		final HashMap<Class<? extends Directory>, Integer> tags = new HashMap<>();
 		tags.put(ExifSubIFDDirectory.class, ExifSubIFDDirectory.TAG_DATETIME_ORIGINAL);
 		tags.put(Mp4Directory.class, Mp4Directory.TAG_CREATION_TIME);
 		tags.put(QuickTimeDirectory.class, QuickTimeDirectory.TAG_CREATION_TIME);
@@ -235,33 +238,6 @@ public class NameAsCreated{
 			}
 			catch(final Exception e){
 				LOGGER.error("Error using format {}", sdf, e);
-			}
-		}
-		
-		LOGGER.info("Trying pattern: {}", DATE_PATTERN);
-		final var matcher = DATE_PATTERN.matcher(name);
-		if(matcher.matches()){
-			try{
-				LOGGER.debug("Pattern matched");
-				final var cdate = outputDateFormat.parse(name);
-				final var parsedCal = Calendar.getInstance();
-				
-				parsedCal.setTime(cdate);
-				if(parsedCal.get(Calendar.YEAR) < 1970){
-					throw new ParseException("Invalid year", 0);
-				}
-				if(parsedCal.get(Calendar.YEAR) == 1970){
-					parsedCal.set(Calendar.YEAR, currentCal.get(Calendar.YEAR));
-				}
-				
-				date = parsedCal.getTime();
-				LOGGER.debug("Matched date format for {}{}", name, extension);
-				return new NewFile(outputDateFormat.format(date), extension, f.getParentFile(), date, f);
-			}
-			catch(final ParseException ignored){
-			}
-			catch(final Exception e){
-				LOGGER.error("Error using format", e);
 			}
 		}
 		
