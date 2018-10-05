@@ -8,7 +8,6 @@ import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.Date;
 import java.util.List;
-import java.util.Map;
 import java.util.TimeZone;
 
 /**
@@ -24,11 +23,10 @@ public class XmpDateExtractor implements DateExtractor<XmpDirectory>
 	private final DateTimeFormatter df = DateTimeFormatter.ofPattern("yyy-MM-dd'T'HH:mm:ss");
 	
 	@Override
-	public Date parse(Directory directory, TimeZone tz)
-	{
-		XmpDirectory xmpDirectory = (XmpDirectory) directory;
-		Map<String, String> values = xmpDirectory.getXmpProperties();
-		for(String key : keys)
+	public Date parse(final Directory directory, final TimeZone tz){
+		final var xmpDirectory = (XmpDirectory) directory;
+		final var values = xmpDirectory.getXmpProperties();
+		for(final var key : keys)
 		{
 			if(values.containsKey(key))
 			{
@@ -36,7 +34,7 @@ public class XmpDateExtractor implements DateExtractor<XmpDirectory>
 				{
 					return sdf.parse(ZonedDateTime.ofInstant(sdf.parse(values.get(key)).toInstant(), ZoneOffset.systemDefault()).withZoneSameInstant(tz.toZoneId()).format(df));
 				}
-				catch(Exception e)
+				catch(final Exception ignored)
 				{
 				}
 			}

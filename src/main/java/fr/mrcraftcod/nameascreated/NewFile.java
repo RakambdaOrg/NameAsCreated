@@ -9,6 +9,7 @@ import java.util.Date;
  * @author Thomas Couchoud
  * @since 2017-08-12
  */
+@SuppressWarnings("WeakerAccess")
 public class NewFile
 {
 	private final String name;

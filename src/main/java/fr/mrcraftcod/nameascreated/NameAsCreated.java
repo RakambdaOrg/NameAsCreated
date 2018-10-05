@@ -72,7 +72,7 @@ public class NameAsCreated{
 	}
 	
 	private static LinkedList<String> listFiles(final File folder){
-		final LinkedList<String> files = new LinkedList<>();
+		final var files = new LinkedList<String>();
 		for(final var file : Objects.requireNonNull(folder.listFiles())){
 			if(file.isDirectory()){
 				files.addAll(listFiles(file));
@@ -100,6 +100,7 @@ public class NameAsCreated{
 			return null;
 		}).filter(Objects::nonNull).sorted(Comparator.comparing(NewFile::getDate)).collect(Collectors.toList());
 		for(final var newFile : files){
+			//noinspection ResultOfMethodCallIgnored
 			newFile.getSource().renameTo(new File(newFile.getParent(), ++i + newFile.getExtension()));
 		}
 	}
@@ -136,6 +137,10 @@ public class NameAsCreated{
 		}
 	}
 	
+	@SuppressWarnings({
+			"Duplicates",
+			"WeakerAccess"
+	})
 	public static NewFile buildName(final File f) throws IOException{
 		final var prefix = "";
 		final var extension = f.getName().substring(f.getName().lastIndexOf('.'));
@@ -145,40 +150,55 @@ public class NameAsCreated{
 		final var currentCal = Calendar.getInstance();
 		currentCal.setTime(date);
 		
-		final HashMap<Class<? extends Directory>, Integer> tags = new HashMap<>();
-		tags.put(ExifSubIFDDirectory.class, ExifSubIFDDirectory.TAG_DATETIME_ORIGINAL);
-		tags.put(Mp4Directory.class, Mp4Directory.TAG_CREATION_TIME);
-		tags.put(QuickTimeDirectory.class, QuickTimeDirectory.TAG_CREATION_TIME);
+		final var tags = new HashMap<Class<? extends Directory>, DateExtractor<? extends Directory>>();
+		tags.put(ExifSubIFDDirectory.class, new SimpleDateExtractor<ExifSubIFDDirectory>(ExifSubIFDDirectory.TAG_DATETIME_ORIGINAL));
+		tags.put(Mp4Directory.class, new SimpleDateExtractor<Mp4Directory>(Mp4Directory.TAG_CREATION_TIME));
+		tags.put(QuickTimeDirectory.class, new SimpleDateExtractor<QuickTimeDirectory>(QuickTimeDirectory.TAG_CREATION_TIME));
+		tags.put(XmpDirectory.class, new XmpDateExtractor());
 		
 		try{
 			final var metadata = ImageMetadataReader.readMetadata(f);
 			if(metadata != null){
 				try{
-					for(final var c : tags.keySet()){
-						LOGGER.debug("Trying {}", c.getName());
-						final var directory = metadata.getFirstDirectoryOfType(c);
-						if(directory != null){
-							Optional<ZoneId> maybeZoneId = Optional.empty();
-							try{
-								for(final var gpsDirectory : metadata.getDirectoriesOfType(GpsDirectory.class)){
-									if(!maybeZoneId.isPresent()){
-										final var location = gpsDirectory.getGeoLocation();
-										maybeZoneId = Optional.ofNullable(getZoneID(location.getLatitude(), location.getLongitude()));
-									}
-								}
-								for(final var gpsDirectory : metadata.getDirectoriesOfType(QuickTimeMetadataDirectory.class)){
-									if(!maybeZoneId.isPresent()){
-										final var location = PointLocationParser.parsePointLocation(gpsDirectory.getString(0x050D));
+					Optional<ZoneId> maybeZoneId = Optional.empty();
+					try{
+						for(final var gpsDirectory : metadata.getDirectoriesOfType(GpsDirectory.class)){
+							if(maybeZoneId.isEmpty()){
+								final var location = gpsDirectory.getGeoLocation();
+								maybeZoneId = Optional.ofNullable(getZoneID(location.getLatitude(), location.getLongitude()));
+							}
+						}
+						for(final var quickTimeMetadataDirectory : metadata.getDirectoriesOfType(QuickTimeMetadataDirectory.class)){
+							if(maybeZoneId.isEmpty()){
+								final var location = PointLocationParser.parsePointLocation(quickTimeMetadataDirectory.getString(0x050D));
+								maybeZoneId = Optional.ofNullable(getZoneID(location.getLatitude().getDegrees(), location.getLongitude().getDegrees()));
+							}
+						}
+						for(final var xmpDirectory : metadata.getDirectoriesOfType(XmpDirectory.class)){
+							if(maybeZoneId.isEmpty()){
+								final var xmpValues = xmpDirectory.getXmpProperties();
+								if(xmpValues.containsKey("exif:GPSLatitude") && xmpValues.containsKey("exif:GPSLongitude")){
+									final var lat = getAngle(xmpValues.get("exif:GPSLatitude"));
+									final var lon = getAngle(xmpValues.get("exif:GPSLongitude"));
+									if(lat != null && lon != null){
+										final var location = new PointLocation(new Latitude(lat), new Longitude(lon));
 										maybeZoneId = Optional.ofNullable(getZoneID(location.getLatitude().getDegrees(), location.getLongitude().getDegrees()));
 									}
 								}
 							}
-							catch(final Exception e){
-								LOGGER.warn("Error getting GPS infos", e);
-							}
-							final var zoneID = maybeZoneId.orElse(ZoneId.systemDefault());
-							final var timeZone = TimeZone.getTimeZone(zoneID);
-							var takenDate = directory.getDate(tags.get(c), timeZone);
+						}
+					}
+					catch(final Exception e){
+						LOGGER.warn("Error getting GPS infos", e);
+					}
+					final var zoneID = maybeZoneId.orElse(ZoneId.systemDefault());
+					final var timeZone = TimeZone.getTimeZone(zoneID);
+					
+					for(final var c : tags.keySet()){
+						LOGGER.debug("Trying {}", c.getName());
+						final var directory = metadata.getFirstDirectoryOfType(c);
+						if(directory != null){
+							var takenDate = tags.get(c).parse(directory, timeZone);//directory.getDate(tags.get(c), timeZone);
 							if(takenDate == null){
 								continue;
 							}
@@ -201,7 +221,7 @@ public class NameAsCreated{
 								throw new ParseException("Invalid year", 0);
 							}
 							
-							final var dateTime = LocalDateTime.ofEpochSecond(parsedCal.getTimeInMillis() / 1000, 0, zoneID.getRules().getOffset(Instant.now())).atZone(ZoneId.systemDefault());
+							final var dateTime = parsedCal.getTime();
 							return new NewFile(outputDateFormat.format(Date.from(dateTime.toInstant())), extension, f.getParentFile(), takenDate, f);
 						}
 					}
@@ -241,6 +261,33 @@ public class NameAsCreated{
 			}
 		}
 		
+		LOGGER.info("Trying pattern: {}", DATE_PATTERN);
+		final var matcher = DATE_PATTERN.matcher(name);
+		if(matcher.matches()){
+			try{
+				LOGGER.debug("Pattern matched");
+				final var cdate = outputDateFormat.parse(name);
+				final var parsedCal = Calendar.getInstance();
+				
+				parsedCal.setTime(cdate);
+				if(parsedCal.get(Calendar.YEAR) < 1970){
+					throw new ParseException("Invalid year", 0);
+				}
+				if(parsedCal.get(Calendar.YEAR) == 1970){
+					parsedCal.set(Calendar.YEAR, currentCal.get(Calendar.YEAR));
+				}
+				
+				date = parsedCal.getTime();
+				LOGGER.debug("Matched date format for {}{}", name, extension);
+				return new NewFile(outputDateFormat.format(date), extension, f.getParentFile(), date, f);
+			}
+			catch(final ParseException ignored){
+			}
+			catch(final Exception e){
+				LOGGER.error("Error using format", e);
+			}
+		}
+		
 		LOGGER.warn("Unrecognized date format : {}{}, using file last modified time", name, extension);
 		
 		final var parsedCal = Calendar.getInstance();
@@ -256,6 +303,27 @@ public class NameAsCreated{
 		//	parsedCal.set(CAL_YEAR, parsedCal.get(CAL_YEAR) - 1);
 		
 		return new NewFile(prefix + outputDateFormat.format(parsedCal.getTime()), extension, f.getParentFile(), date, f);
+	}
+	
+	private static Angle getAngle(final String s){
+		final var pattern = Pattern.compile("(\\d{1,3}),(\\d{1,2})\\.(\\d+)([NESW])");
+		final var matcher = pattern.matcher(s);
+		if(matcher.matches()){
+			var angle = Integer.parseInt(matcher.group(1)) + (Integer.parseInt(matcher.group(2)) / 60.0) + (Double.parseDouble("0." + matcher.group(3)) / 60.0);
+			angle *= getMultiplicator(matcher.group(4));
+			return Angle.fromDegrees(angle);
+		}
+		return null;
+	}
+	
+	private static double getMultiplicator(final String group){
+		switch(group){
+			case "W":
+			case "S":
+				return -1;
+			default:
+				return 1;
+		}
 	}
 	
 	private static ZoneId getZoneID(final double latitude, final double longitude){
