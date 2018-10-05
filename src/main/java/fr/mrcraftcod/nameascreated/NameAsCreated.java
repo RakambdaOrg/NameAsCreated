@@ -23,6 +23,7 @@ import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.util.*;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 /**
@@ -47,6 +48,7 @@ public class NameAsCreated{
 			new SimpleDateFormat("'Video' dd-MM-yyy hh mm ss", Locale.ENGLISH),
 			new SimpleDateFormat("dd MMM yyy, hh:mm:ss", Locale.ENGLISH)
 	};
+	private static final Pattern DATE_PATTERN = Pattern.compile("(\\d{4}-\\d{2}-\\d{2} \\d{2}\\.\\d{2}\\.\\d{2}).*");
 	
 	public static void main(final String[] args){
 		final var argsList = new LinkedList<>(Arrays.asList(args));
@@ -67,7 +69,7 @@ public class NameAsCreated{
 	}
 	
 	private static LinkedList<String> listFiles(final File folder){
-		final LinkedList<String> files = new LinkedList<>();
+		final var files = new LinkedList<String>();
 		for(final var file : Objects.requireNonNull(folder.listFiles())){
 			if(file.isDirectory()){
 				files.addAll(listFiles(file));
@@ -140,7 +142,7 @@ public class NameAsCreated{
 		final var currentCal = Calendar.getInstance();
 		currentCal.setTime(date);
 		
-		final HashMap<Class<? extends Directory>, Integer> tags = new HashMap<>();
+		final var tags = new HashMap<Class<? extends Directory>, Integer>();
 		tags.put(ExifSubIFDDirectory.class, ExifSubIFDDirectory.TAG_DATETIME_ORIGINAL);
 		tags.put(Mp4Directory.class, Mp4Directory.TAG_CREATION_TIME);
 		tags.put(QuickTimeDirectory.class, QuickTimeDirectory.TAG_CREATION_TIME);
@@ -233,6 +235,33 @@ public class NameAsCreated{
 			}
 			catch(final Exception e){
 				LOGGER.error("Error using format {}", sdf, e);
+			}
+		}
+		
+		LOGGER.info("Trying pattern: {}", DATE_PATTERN);
+		final var matcher = DATE_PATTERN.matcher(name);
+		if(matcher.matches()){
+			try{
+				LOGGER.debug("Pattern matched");
+				final var cdate = outputDateFormat.parse(name);
+				final var parsedCal = Calendar.getInstance();
+				
+				parsedCal.setTime(cdate);
+				if(parsedCal.get(Calendar.YEAR) < 1970){
+					throw new ParseException("Invalid year", 0);
+				}
+				if(parsedCal.get(Calendar.YEAR) == 1970){
+					parsedCal.set(Calendar.YEAR, currentCal.get(Calendar.YEAR));
+				}
+				
+				date = parsedCal.getTime();
+				LOGGER.debug("Matched date format for {}{}", name, extension);
+				return new NewFile(outputDateFormat.format(date), extension, f.getParentFile(), date, f);
+			}
+			catch(final ParseException ignored){
+			}
+			catch(final Exception e){
+				LOGGER.error("Error using format", e);
 			}
 		}
 		
