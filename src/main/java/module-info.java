@@ -9,7 +9,7 @@ module fr.mrcraftcod.nameascreated {
 	
 	requires metadata.extractor;
 	requires pointlocation6709;
-	requires slf4j.api;
+	requires org.slf4j;
 	requires org.apache.logging.log4j;
 	requires json;
 	requires unirest.java;
