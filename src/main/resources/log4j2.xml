@@ -6,7 +6,7 @@
         </Console>
     </Appenders>
     <Loggers>
-        <Logger name="fr.mrcraftcod.nameascreated" level="info">
+        <Logger name="fr.mrcraftcod" level="info">
             <AppenderRef ref="Console"/>
         </Logger>
         <Root level="info">
