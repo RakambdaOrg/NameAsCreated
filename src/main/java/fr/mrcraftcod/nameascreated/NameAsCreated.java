@@ -70,6 +70,11 @@ public class NameAsCreated{
 				argsList.pop();
 				renameDate(listFiles(new File(Objects.requireNonNull(argsList.peek()))));
 				break;
+			case "-rt":
+				argsList.pop();
+				testMode = true;
+				renameDate(listFiles(new File(Objects.requireNonNull(argsList.peek()))));
+				break;
 			default:
 				renameDate(argsList);
 				break;
