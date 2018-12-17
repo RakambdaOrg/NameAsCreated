@@ -41,6 +41,7 @@ public class NameAsCreated{
 	private static final SimpleDateFormat[] formats = {
 			new SimpleDateFormat("yyyy-MM-dd HH.mm.ss", Locale.ENGLISH),
 			new SimpleDateFormat("yyyy-MM-dd HH-mm-ss", Locale.ENGLISH),
+			new SimpleDateFormat("yyyy-MM-dd_HH-mm-ss", Locale.ENGLISH),
 			new SimpleDateFormat("yyyy-MM-dd", Locale.ENGLISH),
 			new SimpleDateFormat("'Screen Shot' yyyy-MM-dd 'at' HH.mm.ss", Locale.ENGLISH),
 			new SimpleDateFormat("'Photo' MMM dd, hh mm ss aaa", Locale.ENGLISH),

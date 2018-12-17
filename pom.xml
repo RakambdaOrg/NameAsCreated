@@ -6,7 +6,7 @@
 
     <groupId>fr.mrcraftcod</groupId>
     <artifactId>NameAsCreated</artifactId>
-    <version>6.4</version>
+    <version>6.5</version>
 
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
