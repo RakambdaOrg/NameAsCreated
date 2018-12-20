@@ -1,9 +1,10 @@
-package fr.mrcraftcod.nameascreated;
+package fr.mrcraftcod.nameascreated.renaming;
 
-import fr.mrcraftcod.nameascreated.renaming.RenamingStrategy;
+import fr.mrcraftcod.nameascreated.NewFile;
+import fr.mrcraftcod.nameascreated.strategy.RenamingStrategy;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import java.io.File;
+import java.nio.file.Path;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Objects;
@@ -21,10 +22,11 @@ public class RenameIncrementing{
 	/**
 	 * Rename files with an incrementing number.
 	 *
-	 * @param startIndex The starting index of the number.
-	 * @param files      The list of files to modify.
+	 * @param startIndex       The starting index of the number.
+	 * @param renamingStrategy The strategy to rename the files.
+	 * @param files            The list of files to modify.
 	 */
-	public static void processFiles(final int startIndex, final RenamingStrategy renamingStrategy, final List<File> files){
+	public static void processFiles(final int startIndex, final RenamingStrategy renamingStrategy, final List<Path> files){
 		var i = startIndex;
 		final var newFiles = files.stream().map(name -> {
 			try{
@@ -36,8 +38,7 @@ public class RenameIncrementing{
 			return null;
 		}).filter(Objects::nonNull).sorted(Comparator.comparing(NewFile::getDate)).collect(Collectors.toList());
 		for(final var newFile : newFiles){
-			final var newFilePath = new File(newFile.getParent(), ++i + newFile.getExtension());
-			newFile.renameTo(newFilePath);
+			newFile.renameTo(newFile.getParent().resolve(++i + newFile.getExtension()).toFile());
 		}
 	}
 }

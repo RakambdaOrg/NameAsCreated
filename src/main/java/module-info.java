@@ -18,6 +18,6 @@ module fr.mrcraftcod.nameascreated {
 	requires javafx.controls;
 	
 	exports fr.mrcraftcod.nameascreated;
-	exports fr.mrcraftcod.nameascreated.renaming;
+	exports fr.mrcraftcod.nameascreated.strategy;
 	exports fr.mrcraftcod.nameascreated.extractor;
 }

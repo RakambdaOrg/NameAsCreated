@@ -1,7 +1,10 @@
 package fr.mrcraftcod.nameascreated;
 
-import fr.mrcraftcod.nameascreated.renaming.ByDateRenaming;
-import java.io.File;
+import fr.mrcraftcod.nameascreated.renaming.RenameDate;
+import fr.mrcraftcod.nameascreated.renaming.RenameIncrementing;
+import fr.mrcraftcod.nameascreated.strategy.ByDateRenaming;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.Arrays;
 import java.util.LinkedList;
 import java.util.Objects;
@@ -30,24 +33,24 @@ public class Main{
 					argsList.pop();
 					startIndex = Integer.parseInt(argsList.pop()) - 1;
 				}
-				RenameIncrementing.processFiles(startIndex, new ByDateRenaming(), argsList.stream().map(File::new).collect(Collectors.toList()));
+				RenameIncrementing.processFiles(startIndex, new ByDateRenaming(), argsList.stream().map(Paths::get).collect(Collectors.toList()));
 				break;
 			case "-t":
 				argsList.pop();
-				NameAsCreated.testMode = true;
-				NameAsCreated.renameDate(argsList);
+				NewFile.testMode = true;
+				RenameDate.processFiles(new ByDateRenaming(), argsList.stream().map(Paths::get).collect(Collectors.toList()));
 				break;
 			case "-r":
 				argsList.pop();
-				NameAsCreated.renameDate(listFiles(new File(Objects.requireNonNull(argsList.peek()))));
+				RenameDate.processFiles(new ByDateRenaming(), listFiles(Paths.get(Objects.requireNonNull(argsList.peek()))));
 				break;
 			case "-rt":
 				argsList.pop();
-				NameAsCreated.testMode = true;
-				NameAsCreated.renameDate(listFiles(new File(Objects.requireNonNull(argsList.peek()))));
+				NewFile.testMode = true;
+				RenameDate.processFiles(new ByDateRenaming(), listFiles(Paths.get(Objects.requireNonNull(argsList.peek()))));
 				break;
 			default:
-				NameAsCreated.renameDate(argsList);
+				RenameDate.processFiles(new ByDateRenaming(), argsList.stream().map(Paths::get).collect(Collectors.toList()));
 				break;
 		}
 	}
@@ -57,16 +60,16 @@ public class Main{
 	 *
 	 * @param folder The folder to get the files from.
 	 *
-	 * @return A list of file paths.
+	 * @return A list of paths.
 	 */
-	private static LinkedList<String> listFiles(final File folder){
-		final var files = new LinkedList<String>();
-		for(final var file : Objects.requireNonNull(folder.listFiles())){
+	private static LinkedList<Path> listFiles(final Path folder){
+		final var files = new LinkedList<Path>();
+		for(final var file : Objects.requireNonNull(folder.toFile().listFiles())){
 			if(file.isDirectory()){
-				files.addAll(listFiles(file));
+				files.addAll(listFiles(folder.resolve(file.getName())));
 			}
 			else{
-				files.add(file.getAbsolutePath());
+				files.add(folder.resolve(file.getName()));
 			}
 		}
 		return files;

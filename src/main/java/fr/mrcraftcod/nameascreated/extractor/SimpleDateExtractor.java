@@ -14,17 +14,23 @@ public class SimpleDateExtractor<T extends Directory> implements DateExtractor<T
 	private final int tag;
 	private final Class<T> klass;
 	
+	/**
+	 * Constructor.
+	 *
+	 * @param klass The class of the directory.
+	 * @param tag   The tag to fetch the date from.
+	 */
 	public SimpleDateExtractor(final Class<T> klass, final int tag){
 		this.klass = klass;
 		this.tag = tag;
 	}
 	
 	@Override
-	public Date parse(final Directory directory, final TimeZone tz)
-	{
+	public Date parse(final Directory directory, final TimeZone tz){
 		return directory.getDate(this.tag, tz);
 	}
 	
+	@Override
 	public Class<T> getKlass(){
 		return klass;
 	}

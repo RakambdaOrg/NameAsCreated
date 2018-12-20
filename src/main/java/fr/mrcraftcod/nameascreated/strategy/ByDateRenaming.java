@@ -1,4 +1,4 @@
-package fr.mrcraftcod.nameascreated;
+package fr.mrcraftcod.nameascreated.strategy;
 
 import com.drew.imaging.ImageMetadataReader;
 import com.drew.metadata.exif.ExifSubIFDDirectory;
@@ -8,6 +8,7 @@ import com.drew.metadata.mov.QuickTimeDirectory;
 import com.drew.metadata.mov.metadata.QuickTimeMetadataDirectory;
 import com.drew.metadata.mp4.Mp4Directory;
 import com.drew.metadata.xmp.XmpDirectory;
+import fr.mrcraftcod.nameascreated.NewFile;
 import fr.mrcraftcod.nameascreated.extractor.DateExtractor;
 import fr.mrcraftcod.nameascreated.extractor.SimpleDateExtractor;
 import fr.mrcraftcod.nameascreated.extractor.XmpDateExtractor;
@@ -19,10 +20,9 @@ import us.fatehi.pointlocation6709.Latitude;
 import us.fatehi.pointlocation6709.Longitude;
 import us.fatehi.pointlocation6709.PointLocation;
 import us.fatehi.pointlocation6709.parse.PointLocationParser;
-import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
-import java.nio.file.Paths;
+import java.nio.file.Path;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
@@ -31,14 +31,14 @@ import java.util.*;
 import java.util.regex.Pattern;
 
 /**
- * Created by Thomas Couchoud (MrCraftCod - zerderr@gmail.com) on 23/01/2017.
+ * Created by Thomas Couchoud (MrCraftCod - zerderr@gmail.com) on 2018-12-20.
  *
  * @author Thomas Couchoud
- * @since 2017-01-23
+ * @since 2018-12-20
  */
-public class NameAsCreated{
-	public static boolean testMode = false;
-	private static final Logger LOGGER = LoggerFactory.getLogger(NameAsCreated.class);
+public class ByDateRenaming implements RenamingStrategy{
+	private static final Logger LOGGER = LoggerFactory.getLogger(ByDateRenaming.class);
+	
 	private static final SimpleDateFormat outputDateFormat = new SimpleDateFormat("yyyy-MM-dd HH.mm.ss");
 	private static final SimpleDateFormat[] formats = {
 			new SimpleDateFormat("yyyy-MM-dd HH.mm.ss", Locale.ENGLISH),
@@ -56,47 +56,13 @@ public class NameAsCreated{
 	};
 	private static final Pattern DATE_PATTERN = Pattern.compile("(\\d{4}-\\d{2}-\\d{2} \\d{2}\\.\\d{2}\\.\\d{2}).*");
 	
-	static void renameDate(final LinkedList<String> args){
-		for(final var arg : args){
-			try{
-				final var f = new File(arg);
-				if(f.exists() && f.isFile() && f.getName().contains(".") && !f.getName().startsWith(".")){
-					try{
-						final var fileTo = new File(f.getParentFile(), buildName(f).getName(f));
-						if(fileTo.getName().equals(f.getName())){
-							continue;
-						}
-						if(fileTo.exists()){
-							LOGGER.warn("Couldn't rename file {} to {}, file already exists", f.getAbsolutePath(), fileTo.getAbsolutePath());
-							continue;
-						}
-						if(testMode || f.renameTo(fileTo)){
-							LOGGER.info("Renamed {} to {}", f.getName(), fileTo.getName());
-						}
-						else{
-							LOGGER.error("Failed to rename {}", f.getAbsolutePath());
-						}
-					}
-					catch(final Exception e){
-						LOGGER.error("Error renaming file {}", f.getAbsolutePath(), e.getMessage());
-					}
-				}
-			}
-			catch(final Exception e){
-				LOGGER.error("Error processing file {}", arg, e);
-			}
-		}
-	}
-	
-	@SuppressWarnings({
-			"Duplicates",
-			"WeakerAccess"
-	})
-	public static NewFile buildName(final File f) throws IOException{
+	@Override
+	public NewFile renameFile(final Path path) throws IOException{
+		final var file = path.toFile();
 		final var prefix = "";
-		final var extension = f.getName().substring(f.getName().lastIndexOf('.'));
-		final var name = f.getName().substring(0, f.getName().lastIndexOf('.'));
-		final var attr = Files.readAttributes(Paths.get(f.toURI()), BasicFileAttributes.class);
+		final var extension = file.getName().substring(file.getName().lastIndexOf('.'));
+		final var name = file.getName().substring(0, file.getName().lastIndexOf('.'));
+		final var attr = Files.readAttributes(path, BasicFileAttributes.class);
 		var date = new Date(attr.lastModifiedTime().toMillis());
 		final var currentCal = Calendar.getInstance();
 		currentCal.setTime(date);
@@ -108,7 +74,7 @@ public class NameAsCreated{
 		dataExtractors.add(new XmpDateExtractor());
 		
 		try{
-			final var metadata = ImageMetadataReader.readMetadata(f);
+			final var metadata = ImageMetadataReader.readMetadata(file);
 			if(metadata != null){
 				try{
 					Optional<ZoneId> maybeZoneId = Optional.empty();
@@ -174,7 +140,7 @@ public class NameAsCreated{
 								}
 								
 								final var dateTime = parsedCal.getTime();
-								return new NewFile(outputDateFormat.format(Date.from(dateTime.toInstant())), extension, f.getParentFile(), takenDate, f);
+								return new NewFile(outputDateFormat.format(Date.from(dateTime.toInstant())), extension, path.getParent(), takenDate, path);
 							}
 						}
 						catch(final Exception e){
@@ -208,7 +174,7 @@ public class NameAsCreated{
 				
 				date = parsedCal.getTime();
 				LOGGER.debug("Matched date format for {}{}", name, extension);
-				return new NewFile(outputDateFormat.format(date), extension, f.getParentFile(), date, f);
+				return new NewFile(outputDateFormat.format(date), extension, path.getParent(), date, path);
 			}
 			catch(final ParseException ignored){
 			}
@@ -235,7 +201,7 @@ public class NameAsCreated{
 				
 				date = parsedCal.getTime();
 				LOGGER.debug("Matched date format for {}{}", name, extension);
-				return new NewFile(outputDateFormat.format(date), extension, f.getParentFile(), date, f);
+				return new NewFile(outputDateFormat.format(date), extension, path.getParent(), date, path);
 			}
 			catch(final ParseException ignored){
 			}
@@ -258,7 +224,26 @@ public class NameAsCreated{
 		//if(parsedCal.after(currentCal))
 		//	parsedCal.set(CAL_YEAR, parsedCal.get(CAL_YEAR) - 1);
 		
-		return new NewFile(prefix + outputDateFormat.format(parsedCal.getTime()), extension, f.getParentFile(), date, f);
+		return new NewFile(prefix + outputDateFormat.format(parsedCal.getTime()), extension, path.getParent(), date, path);
+	}
+	
+	private static ZoneId getZoneID(final double latitude, final double longitude){
+		try{
+			final var result = new JSONGetRequestSender("http://api.geonames.org/timezoneJSON?lat=" + latitude + "&lng=" + longitude + "&username=mrcraftcod").getRequestHandler();
+			if(result.getStatus() == 200){
+				final var root = result.getRequestResult();
+				if(root != null){
+					final var rootObj = root.getObject();
+					if(rootObj.has("timezoneId")){
+						return ZoneId.of(rootObj.getString("timezoneId"));
+					}
+				}
+			}
+		}
+		catch(final Exception e){
+			LOGGER.error("Error getting zoneID for coordinates {};{}", latitude, longitude, e);
+		}
+		return null;
 	}
 	
 	private static Angle getAngle(final String s){
@@ -280,24 +265,5 @@ public class NameAsCreated{
 			default:
 				return 1;
 		}
-	}
-	
-	private static ZoneId getZoneID(final double latitude, final double longitude){
-		try{
-			final var result = new JSONGetRequestSender("http://api.geonames.org/timezoneJSON?lat=" + latitude + "&lng=" + longitude + "&username=mrcraftcod").getRequestHandler();
-			if(result.getStatus() == 200){
-				final var root = result.getRequestResult();
-				if(root != null){
-					final var rootObj = root.getObject();
-					if(rootObj.has("timezoneId")){
-						return ZoneId.of(rootObj.getString("timezoneId"));
-					}
-				}
-			}
-		}
-		catch(final Exception e){
-			LOGGER.error("Error getting zoneID for coordinates {};{}", latitude, longitude, e);
-		}
-		return null;
 	}
 }
