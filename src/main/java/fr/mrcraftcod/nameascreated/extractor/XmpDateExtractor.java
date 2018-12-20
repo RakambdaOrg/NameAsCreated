@@ -1,4 +1,4 @@
-package fr.mrcraftcod.nameascreated;
+package fr.mrcraftcod.nameascreated.extractor;
 
 import com.drew.metadata.Directory;
 import com.drew.metadata.xmp.XmpDirectory;

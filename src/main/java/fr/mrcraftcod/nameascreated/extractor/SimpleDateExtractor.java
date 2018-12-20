@@ -1,4 +1,4 @@
-package fr.mrcraftcod.nameascreated;
+package fr.mrcraftcod.nameascreated.extractor;
 
 import com.drew.metadata.Directory;
 import java.util.Date;
@@ -14,7 +14,7 @@ public class SimpleDateExtractor<T extends Directory> implements DateExtractor<T
 	private final int tag;
 	private final Class<T> klass;
 	
-	SimpleDateExtractor(final Class<T> klass, final int tag){
+	public SimpleDateExtractor(final Class<T> klass, final int tag){
 		this.klass = klass;
 		this.tag = tag;
 	}

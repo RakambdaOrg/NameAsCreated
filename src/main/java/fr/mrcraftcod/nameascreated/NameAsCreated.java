@@ -8,6 +8,9 @@ import com.drew.metadata.mov.QuickTimeDirectory;
 import com.drew.metadata.mov.metadata.QuickTimeMetadataDirectory;
 import com.drew.metadata.mp4.Mp4Directory;
 import com.drew.metadata.xmp.XmpDirectory;
+import fr.mrcraftcod.nameascreated.extractor.DateExtractor;
+import fr.mrcraftcod.nameascreated.extractor.SimpleDateExtractor;
+import fr.mrcraftcod.nameascreated.extractor.XmpDateExtractor;
 import fr.mrcraftcod.utils.http.requestssenders.get.JSONGetRequestSender;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -26,7 +29,6 @@ import java.text.SimpleDateFormat;
 import java.time.ZoneId;
 import java.util.*;
 import java.util.regex.Pattern;
-import java.util.stream.Collectors;
 
 /**
  * Created by Thomas Couchoud (MrCraftCod - zerderr@gmail.com) on 23/01/2017.
@@ -35,7 +37,7 @@ import java.util.stream.Collectors;
  * @since 2017-01-23
  */
 public class NameAsCreated{
-	private static boolean testMode = false;
+	public static boolean testMode = false;
 	private static final Logger LOGGER = LoggerFactory.getLogger(NameAsCreated.class);
 	private static final SimpleDateFormat outputDateFormat = new SimpleDateFormat("yyyy-MM-dd HH.mm.ss");
 	private static final SimpleDateFormat[] formats = {
@@ -54,69 +56,7 @@ public class NameAsCreated{
 	};
 	private static final Pattern DATE_PATTERN = Pattern.compile("(\\d{4}-\\d{2}-\\d{2} \\d{2}\\.\\d{2}\\.\\d{2}).*");
 	
-	public static void main(final String[] args){
-		final var argsList = new LinkedList<>(Arrays.asList(args));
-		
-		switch(Objects.requireNonNull(argsList.peek())){
-			case "-n":
-				argsList.pop();
-				renameCount(argsList);
-				break;
-			case "-t":
-				argsList.pop();
-				testMode = true;
-				renameDate(argsList);
-				break;
-			case "-r":
-				argsList.pop();
-				renameDate(listFiles(new File(Objects.requireNonNull(argsList.peek()))));
-				break;
-			case "-rt":
-				argsList.pop();
-				testMode = true;
-				renameDate(listFiles(new File(Objects.requireNonNull(argsList.peek()))));
-				break;
-			default:
-				renameDate(argsList);
-				break;
-		}
-	}
-	
-	private static LinkedList<String> listFiles(final File folder){
-		final var files = new LinkedList<String>();
-		for(final var file : Objects.requireNonNull(folder.listFiles())){
-			if(file.isDirectory()){
-				files.addAll(listFiles(file));
-			}
-			else{
-				files.add(file.getAbsolutePath());
-			}
-		}
-		return files;
-	}
-	
-	private static void renameCount(final LinkedList<String> args){
-		var i = 0;
-		if(Objects.requireNonNull(args.peek()).equals("-s")){
-			args.pop();
-			i = Integer.parseInt(args.pop()) - 1;
-		}
-		final var files = args.stream().map(name -> {
-			try{
-				return buildName(new File(name));
-			}
-			catch(IOException e){
-				LOGGER.error("Error building name", e);
-			}
-			return null;
-		}).filter(Objects::nonNull).sorted(Comparator.comparing(NewFile::getDate)).collect(Collectors.toList());
-		for(final var newFile : files){
-			//noinspection ResultOfMethodCallIgnored
-			newFile.getSource().renameTo(new File(newFile.getParent(), ++i + newFile.getExtension()));
-		}
-	}
-	
-	private static void renameDate(final LinkedList<String> args){
+	static void renameDate(final LinkedList<String> args){
 		for(final var arg : args){
 			try{
 				final var f = new File(arg);

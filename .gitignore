@@ -1,6 +1,5 @@
-NameAsCreated.iml
 .idea
 target
-.gradle
-gradle
-*.iml
+test
+
+NameAsCreated.iml
