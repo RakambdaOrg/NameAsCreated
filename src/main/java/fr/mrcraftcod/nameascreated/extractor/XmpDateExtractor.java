@@ -5,6 +5,7 @@ import com.drew.metadata.xmp.XmpDirectory;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
+import java.util.Optional;
 import java.util.TimeZone;
 
 /**
@@ -27,7 +28,7 @@ public class XmpDateExtractor implements DateExtractor<XmpDirectory>{
 			{
 				try
 				{
-					return ZonedDateTime.parse(values.get(key), dateTimeFormatter.withZone(tz.toZoneId()));
+					return Optional.of(values.get(key)).map(date -> ZonedDateTime.parse(date, dateTimeFormatter.withZone(tz.toZoneId()))).orElse(null);
 				}
 				catch(final Exception ignored)
 				{

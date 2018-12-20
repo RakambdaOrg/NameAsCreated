@@ -31,6 +31,7 @@ import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
+import java.time.format.DateTimeParseException;
 import java.util.*;
 import java.util.regex.Pattern;
 
@@ -113,7 +114,7 @@ public class ByDateRenaming implements RenamingStrategy{
 					LOGGER.info("Matched date format for {}{}", name, extension);
 					return new NewFile(outputDateFormat.format(date), extension, path.getParent(), date, path);
 				}
-				catch(final ParseException ignored){
+				catch(final ParseException | DateTimeParseException ignored){
 				}
 				catch(final Exception e){
 					LOGGER.error("Error using format {}", dateTimeFormatter, e);

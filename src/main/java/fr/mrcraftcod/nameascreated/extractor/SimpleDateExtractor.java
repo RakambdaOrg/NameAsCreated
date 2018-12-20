@@ -2,6 +2,8 @@ package fr.mrcraftcod.nameascreated.extractor;
 
 import com.drew.metadata.Directory;
 import java.time.ZonedDateTime;
+import java.util.Date;
+import java.util.Optional;
 import java.util.TimeZone;
 
 /**
@@ -27,7 +29,7 @@ public class SimpleDateExtractor<T extends Directory> implements DateExtractor<T
 	
 	@Override
 	public ZonedDateTime parse(final Directory directory, final TimeZone tz){
-		return directory.getDate(this.tag, tz).toInstant().atZone(tz.toZoneId());
+		return Optional.of(directory.getDate(this.tag, tz)).map(Date::toInstant).map(date -> date.atZone(tz.toZoneId())).orElse(null);
 	}
 	
 	@Override
