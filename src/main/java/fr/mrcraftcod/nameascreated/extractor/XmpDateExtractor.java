@@ -28,7 +28,7 @@ public class XmpDateExtractor implements DateExtractor<XmpDirectory>{
 			{
 				try
 				{
-					return Optional.of(values.get(key)).map(date -> ZonedDateTime.parse(date, dateTimeFormatter.withZone(tz.toZoneId()))).orElse(null);
+					return Optional.ofNullable(values.get(key)).map(date -> ZonedDateTime.parse(date, dateTimeFormatter.withZone(tz.toZoneId()))).orElse(null);
 				}
 				catch(final Exception ignored)
 				{

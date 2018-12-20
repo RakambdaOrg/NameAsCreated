@@ -29,7 +29,7 @@ public class SimpleDateExtractor<T extends Directory> implements DateExtractor<T
 	
 	@Override
 	public ZonedDateTime parse(final Directory directory, final TimeZone tz){
-		return Optional.of(directory.getDate(this.tag, tz)).map(Date::toInstant).map(date -> date.atZone(tz.toZoneId())).orElse(null);
+		return Optional.ofNullable(directory.getDate(this.tag, tz)).map(Date::toInstant).map(date -> date.atZone(tz.toZoneId())).orElse(null);
 	}
 	
 	@Override

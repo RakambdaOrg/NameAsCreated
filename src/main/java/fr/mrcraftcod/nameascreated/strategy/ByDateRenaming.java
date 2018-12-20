@@ -114,7 +114,11 @@ public class ByDateRenaming implements RenamingStrategy{
 					LOGGER.info("Matched date format for {}{}", name, extension);
 					return new NewFile(outputDateFormat.format(date), extension, path.getParent(), date, path);
 				}
-				catch(final ParseException | DateTimeParseException ignored){
+				catch(final ParseException e){
+					LOGGER.warn("Invalid year with used format for file {}", path);
+				}
+				catch(final DateTimeParseException ignored){
+				
 				}
 				catch(final Exception e){
 					LOGGER.error("Error using format {}", dateTimeFormatter, e);
@@ -175,6 +179,9 @@ public class ByDateRenaming implements RenamingStrategy{
 								return Optional.of(new NewFile(outputDateFormat.format(takenDate), extension, path.getParent(), takenDate, path));
 							}
 						}
+					}
+					catch(final ParseException e){
+						LOGGER.warn("Invalid year with directory {} for file {}", dataExtractor.getKlass().getName(), path);
 					}
 					catch(final Exception e){
 						LOGGER.error("Error processing directory {} for {}{}", dataExtractor.getKlass().getName(), name, extension, e);
