@@ -1,6 +1,7 @@
 package fr.mrcraftcod.nameascreated.strategy;
 
 import com.drew.imaging.ImageMetadataReader;
+import com.drew.metadata.Metadata;
 import com.drew.metadata.exif.ExifSubIFDDirectory;
 import com.drew.metadata.exif.GpsDirectory;
 import com.drew.metadata.file.FileSystemDirectory;
@@ -77,38 +78,7 @@ public class ByDateRenaming implements RenamingStrategy{
 			final var metadata = ImageMetadataReader.readMetadata(file);
 			if(metadata != null){
 				try{
-					Optional<ZoneId> maybeZoneId = Optional.empty();
-					try{
-						for(final var gpsDirectory : metadata.getDirectoriesOfType(GpsDirectory.class)){
-							if(maybeZoneId.isEmpty()){
-								final var location = gpsDirectory.getGeoLocation();
-								maybeZoneId = Optional.ofNullable(getZoneID(location.getLatitude(), location.getLongitude()));
-							}
-						}
-						for(final var quickTimeMetadataDirectory : metadata.getDirectoriesOfType(QuickTimeMetadataDirectory.class)){
-							if(maybeZoneId.isEmpty()){
-								final var location = PointLocationParser.parsePointLocation(quickTimeMetadataDirectory.getString(0x050D));
-								maybeZoneId = Optional.ofNullable(getZoneID(location.getLatitude().getDegrees(), location.getLongitude().getDegrees()));
-							}
-						}
-						for(final var xmpDirectory : metadata.getDirectoriesOfType(XmpDirectory.class)){
-							if(maybeZoneId.isEmpty()){
-								final var xmpValues = xmpDirectory.getXmpProperties();
-								if(xmpValues.containsKey("exif:GPSLatitude") && xmpValues.containsKey("exif:GPSLongitude")){
-									final var lat = getAngle(xmpValues.get("exif:GPSLatitude"));
-									final var lon = getAngle(xmpValues.get("exif:GPSLongitude"));
-									if(lat != null && lon != null){
-										final var location = new PointLocation(new Latitude(lat), new Longitude(lon));
-										maybeZoneId = Optional.ofNullable(getZoneID(location.getLatitude().getDegrees(), location.getLongitude().getDegrees()));
-									}
-								}
-							}
-						}
-					}
-					catch(final Exception e){
-						LOGGER.warn("Error getting GPS infos", e);
-					}
-					final var zoneID = maybeZoneId.orElse(ZoneId.systemDefault());
+					final var zoneID = getZoneIdFromMetadata(metadata).orElse(ZoneId.systemDefault());
 					final var timeZone = TimeZone.getTimeZone(zoneID);
 					
 					for(final var dataExtractor : dataExtractors){
@@ -225,6 +195,43 @@ public class ByDateRenaming implements RenamingStrategy{
 		//	parsedCal.set(CAL_YEAR, parsedCal.get(CAL_YEAR) - 1);
 		
 		return new NewFile(prefix + outputDateFormat.format(parsedCal.getTime()), extension, path.getParent(), date, path);
+	}
+	
+	private Optional<ZoneId> getZoneIdFromMetadata(final Metadata metadata){
+		try{
+			for(final var gpsDirectory : metadata.getDirectoriesOfType(GpsDirectory.class)){
+				final var location = gpsDirectory.getGeoLocation();
+				final var zoneId = getZoneID(location.getLatitude(), location.getLongitude());
+				if(Objects.nonNull(zoneId)){
+					return Optional.of(zoneId);
+				}
+			}
+			for(final var quickTimeMetadataDirectory : metadata.getDirectoriesOfType(QuickTimeMetadataDirectory.class)){
+				final var location = PointLocationParser.parsePointLocation(quickTimeMetadataDirectory.getString(0x050D));
+				final var zoneId = getZoneID(location.getLatitude().getDegrees(), location.getLongitude().getDegrees());
+				if(Objects.nonNull(zoneId)){
+					return Optional.of(zoneId);
+				}
+			}
+			for(final var xmpDirectory : metadata.getDirectoriesOfType(XmpDirectory.class)){
+				final var xmpValues = xmpDirectory.getXmpProperties();
+				if(xmpValues.containsKey("exif:GPSLatitude") && xmpValues.containsKey("exif:GPSLongitude")){
+					final var lat = getAngle(xmpValues.get("exif:GPSLatitude"));
+					final var lon = getAngle(xmpValues.get("exif:GPSLongitude"));
+					if(lat != null && lon != null){
+						final var location = new PointLocation(new Latitude(lat), new Longitude(lon));
+						final var zoneId = getZoneID(location.getLatitude().getDegrees(), location.getLongitude().getDegrees());
+						if(Objects.nonNull(zoneId)){
+							return Optional.of(zoneId);
+						}
+					}
+				}
+			}
+		}
+		catch(final Exception e){
+			LOGGER.warn("Error getting GPS infos", e);
+		}
+		return Optional.empty();
 	}
 	
 	private static ZoneId getZoneID(final double latitude, final double longitude){
