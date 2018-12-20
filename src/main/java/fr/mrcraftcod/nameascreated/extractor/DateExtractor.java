@@ -1,7 +1,7 @@
 package fr.mrcraftcod.nameascreated.extractor;
 
 import com.drew.metadata.Directory;
-import java.util.Date;
+import java.time.ZonedDateTime;
 import java.util.TimeZone;
 
 /**
@@ -21,7 +21,7 @@ public interface DateExtractor<T extends Directory>{
 	 *
 	 * @return The date or null if not found.
 	 */
-	Date parse(Directory directory, TimeZone tz);
+	ZonedDateTime parse(Directory directory, TimeZone tz);
 	
 	/**
 	 * Get the class of the directory.

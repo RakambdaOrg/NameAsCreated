@@ -26,8 +26,11 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.text.ParseException;
-import java.text.SimpleDateFormat;
+import java.time.Instant;
+import java.time.LocalDateTime;
 import java.time.ZoneId;
+import java.time.ZonedDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.regex.Pattern;
 
@@ -40,22 +43,52 @@ import java.util.regex.Pattern;
 public class ByDateRenaming implements RenamingStrategy{
 	private static final Logger LOGGER = LoggerFactory.getLogger(ByDateRenaming.class);
 	
-	private static final SimpleDateFormat outputDateFormat = new SimpleDateFormat("yyyy-MM-dd HH.mm.ss");
-	private static final SimpleDateFormat[] formats = {
-			new SimpleDateFormat("yyyy-MM-dd HH.mm.ss", Locale.ENGLISH),
-			new SimpleDateFormat("yyyy-MM-dd HH-mm-ss", Locale.ENGLISH),
-			new SimpleDateFormat("yyyy-MM-dd_HH-mm-ss", Locale.ENGLISH),
-			new SimpleDateFormat("yyyy-MM-dd", Locale.ENGLISH),
-			new SimpleDateFormat("'Screen Shot' yyyy-MM-dd 'at' HH.mm.ss", Locale.ENGLISH),
-			new SimpleDateFormat("'Photo' MMM dd, hh mm ss aaa", Locale.ENGLISH),
-			new SimpleDateFormat("'Photo' dd-MM-yyyy, hh mm ss", Locale.ENGLISH),
-			new SimpleDateFormat("'Photo' dd-MM-yyyy hh mm ss", Locale.ENGLISH),
-			new SimpleDateFormat("'Video' MMM dd, hh mm ss aaa", Locale.ENGLISH),
-			new SimpleDateFormat("'Video' dd-MM-yyy, hh mm ss", Locale.ENGLISH),
-			new SimpleDateFormat("'Video' dd-MM-yyy hh mm ss", Locale.ENGLISH),
-			new SimpleDateFormat("dd MMM yyy, hh:mm:ss", Locale.ENGLISH)
-	};
+	private final DateTimeFormatter outputDateFormat;
+	private final List<DateTimeFormatter> parsingFormats;
+	private final ArrayList<DateExtractor<?>> dateExtractors;
 	private static final Pattern DATE_PATTERN = Pattern.compile("(\\d{4}-\\d{2}-\\d{2} \\d{2}\\.\\d{2}\\.\\d{2}).*");
+	
+	/**
+	 * Constructor.
+	 * <p>
+	 * The output format will be `yyyy-MM-dd HH.mm.ss`.
+	 */
+	public ByDateRenaming(){
+		parsingFormats = new ArrayList<>();
+		parsingFormats.add(DateTimeFormatter.ofPattern("yyyy-MM-dd HH.mm.ss", Locale.ENGLISH).withZone(ZoneId.systemDefault()));
+		parsingFormats.add(DateTimeFormatter.ofPattern("yyyy-MM-dd HH-mm-ss", Locale.ENGLISH).withZone(ZoneId.systemDefault()));
+		parsingFormats.add(DateTimeFormatter.ofPattern("yyyy-MM-dd_HH-mm-ss", Locale.ENGLISH).withZone(ZoneId.systemDefault()));
+		parsingFormats.add(DateTimeFormatter.ofPattern("yyyy-MM-dd", Locale.ENGLISH).withZone(ZoneId.systemDefault()));
+		parsingFormats.add(DateTimeFormatter.ofPattern("'Screen Shot' yyyy-MM-dd 'at' HH.mm.ss", Locale.ENGLISH).withZone(ZoneId.systemDefault()));
+		parsingFormats.add(DateTimeFormatter.ofPattern("'Photo' MMM dd, hh mm ss a", Locale.ENGLISH).withZone(ZoneId.systemDefault()));
+		parsingFormats.add(DateTimeFormatter.ofPattern("'Photo' dd-MM-yyyy, HH mm ss", Locale.ENGLISH).withZone(ZoneId.systemDefault()));
+		parsingFormats.add(DateTimeFormatter.ofPattern("'Photo' dd-MM-yyyy HH mm ss", Locale.ENGLISH).withZone(ZoneId.systemDefault()));
+		parsingFormats.add(DateTimeFormatter.ofPattern("'Video' MMM dd, hh mm ss a", Locale.ENGLISH).withZone(ZoneId.systemDefault()));
+		parsingFormats.add(DateTimeFormatter.ofPattern("'Video' dd-MM-yyy, HH mm ss", Locale.ENGLISH).withZone(ZoneId.systemDefault()));
+		parsingFormats.add(DateTimeFormatter.ofPattern("'Video' dd-MM-yyy HH mm ss", Locale.ENGLISH).withZone(ZoneId.systemDefault()));
+		parsingFormats.add(DateTimeFormatter.ofPattern("dd MMM yyy, HH:mm:ss", Locale.ENGLISH).withZone(ZoneId.systemDefault()));
+		
+		dateExtractors = new ArrayList<>();
+		dateExtractors.add(new SimpleDateExtractor<>(ExifSubIFDDirectory.class, ExifSubIFDDirectory.TAG_DATETIME_ORIGINAL));
+		dateExtractors.add(new SimpleDateExtractor<>(Mp4Directory.class, Mp4Directory.TAG_CREATION_TIME));
+		dateExtractors.add(new SimpleDateExtractor<>(QuickTimeDirectory.class, QuickTimeDirectory.TAG_CREATION_TIME));
+		dateExtractors.add(new XmpDateExtractor());
+		
+		outputDateFormat = DateTimeFormatter.ofPattern("yyyy-MM-dd HH.mm.ss", Locale.ENGLISH).withZone(ZoneId.systemDefault());
+	}
+	
+	/**
+	 * Constructor.
+	 *
+	 * @param parsingFormats   The formatters to parse dates.
+	 * @param dateExtractors   The extractors to extract data from the dictionaries of the file.
+	 * @param outputDateFormat The output format.
+	 */
+	public ByDateRenaming(final List<DateTimeFormatter> parsingFormats, final ArrayList<DateExtractor<?>> dateExtractors, final DateTimeFormatter outputDateFormat){
+		this.parsingFormats = parsingFormats;
+		this.dateExtractors = dateExtractors;
+		this.outputDateFormat = outputDateFormat;
+	}
 	
 	@Override
 	public NewFile renameFile(final Path path) throws IOException{
@@ -64,38 +97,69 @@ public class ByDateRenaming implements RenamingStrategy{
 		final var extension = file.getName().substring(file.getName().lastIndexOf('.'));
 		final var name = file.getName().substring(0, file.getName().lastIndexOf('.'));
 		final var attr = Files.readAttributes(path, BasicFileAttributes.class);
-		var date = new Date(attr.lastModifiedTime().toMillis());
-		final var currentCal = Calendar.getInstance();
-		currentCal.setTime(date);
+		var createdDate = Instant.ofEpochMilli(attr.lastModifiedTime().toMillis()).atZone(ZoneId.systemDefault());
 		
-		final var dataExtractors = new ArrayList<DateExtractor>();
-		dataExtractors.add(new SimpleDateExtractor<>(ExifSubIFDDirectory.class, ExifSubIFDDirectory.TAG_DATETIME_ORIGINAL));
-		dataExtractors.add(new SimpleDateExtractor<>(Mp4Directory.class, Mp4Directory.TAG_CREATION_TIME));
-		dataExtractors.add(new SimpleDateExtractor<>(QuickTimeDirectory.class, QuickTimeDirectory.TAG_CREATION_TIME));
-		dataExtractors.add(new XmpDateExtractor());
-		
-		try{
-			final var metadata = ImageMetadataReader.readMetadata(file);
-			if(metadata != null){
+		var newFileOptional = processMetadata(path, name, extension);
+		if(newFileOptional.isEmpty()){
+			for(final var dateTimeFormatter : parsingFormats){
 				try{
-					final var zoneID = getZoneIdFromMetadata(metadata).orElse(ZoneId.systemDefault());
-					final var timeZone = TimeZone.getTimeZone(zoneID);
+					LOGGER.debug("Trying format `{}`", dateTimeFormatter);
+					final var date = ZonedDateTime.parse(name, dateTimeFormatter);
 					
-					for(final var dataExtractor : dataExtractors){
-						try{
-							LOGGER.debug("Trying {}", dataExtractor.getKlass().getName());
-							@SuppressWarnings("unchecked") final var directory = metadata.getFirstDirectoryOfType(dataExtractor.getKlass());
-							if(directory != null){
-								var takenDate = dataExtractor.parse(directory, timeZone);//directory.getDate(tags.get(c), timeZone);
-								if(takenDate == null){
-									continue;
-								}
+					if(date.getYear() < 1970){
+						throw new ParseException("Invalid year", 0);
+					}
+					
+					LOGGER.info("Matched date format for {}{}", name, extension);
+					return new NewFile(outputDateFormat.format(date), extension, path.getParent(), date, path);
+				}
+				catch(final ParseException ignored){
+				}
+				catch(final Exception e){
+					LOGGER.error("Error using format {}", dateTimeFormatter, e);
+				}
+			}
+		}
+		
+		LOGGER.warn("Unrecognized date format : {}{}, using file last modified time", name, extension);
+		
+		if(createdDate.getYear() <= 1970){
+			createdDate = createdDate.withYear(LocalDateTime.now().getYear());
+		}
+		
+		return new NewFile(prefix + outputDateFormat.format(createdDate), extension, path.getParent(), createdDate, path);
+	}
+	
+	/**
+	 * Process the metadata of a file to attempt to extract it's creation date.
+	 *
+	 * @param path      The path of the file.
+	 * @param name      The name of the file.
+	 * @param extension The extension of the file.
+	 *
+	 * @return A potential newFile object.
+	 */
+	private Optional<NewFile> processMetadata(Path path, String name, String extension){
+		try{
+			final var metadata = ImageMetadataReader.readMetadata(path.toFile());
+			if(Objects.nonNull(metadata)){
+				final var zoneID = getZoneIdFromMetadata(metadata).orElse(ZoneId.systemDefault());
+				final var timeZone = TimeZone.getTimeZone(zoneID);
+				
+				for(final var dataExtractor : dateExtractors){
+					try{
+						LOGGER.debug("Trying {}", dataExtractor.getKlass().getName());
+						final var directory = metadata.getFirstDirectoryOfType(dataExtractor.getKlass());
+						if(Objects.nonNull(directory)){
+							var takenDate = dataExtractor.parse(directory, timeZone);
+							if(Objects.nonNull(takenDate)){
 								LOGGER.info("Matched directory {} for {}{}", directory, name, extension);
 								
 								try{
 									for(final var fileDirectory : metadata.getDirectoriesOfType(FileSystemDirectory.class)){
-										if(fileDirectory.getDate(FileSystemDirectory.TAG_FILE_MODIFIED_DATE).before(takenDate)){
-											takenDate = fileDirectory.getDate(FileSystemDirectory.TAG_FILE_MODIFIED_DATE);
+										final var fileDate = fileDirectory.getDate(FileSystemDirectory.TAG_FILE_MODIFIED_DATE).toInstant().atZone(ZoneId.systemDefault());
+										if(fileDate.isBefore(takenDate)){
+											takenDate = fileDate;
 										}
 									}
 								}
@@ -103,100 +167,33 @@ public class ByDateRenaming implements RenamingStrategy{
 									LOGGER.warn("Error getting taken date", e);
 								}
 								
-								final var parsedCal = Calendar.getInstance(timeZone);
-								parsedCal.setTime(takenDate);
-								if(parsedCal.get(Calendar.YEAR) < 1970){
+								if(takenDate.getYear() < 1970){
 									throw new ParseException("Invalid year", 0);
 								}
 								
-								final var dateTime = parsedCal.getTime();
-								return new NewFile(outputDateFormat.format(Date.from(dateTime.toInstant())), extension, path.getParent(), takenDate, path);
+								return Optional.of(new NewFile(outputDateFormat.format(takenDate), extension, path.getParent(), takenDate, path));
 							}
 						}
-						catch(final Exception e){
-							LOGGER.error("Error processing directory {} for {}{}", dataExtractor.getKlass().getName(), name, extension, e);
-						}
 					}
-				}
-				catch(final Exception e){
-					LOGGER.error("Error processing directories for {}{}", name, extension, e);
+					catch(final Exception e){
+						LOGGER.error("Error processing directory {} for {}{}", dataExtractor.getKlass().getName(), name, extension, e);
+					}
 				}
 			}
 		}
 		catch(final Exception e){
 			LOGGER.error("Error processing metadata for {}{}", name, extension, e);
 		}
-		
-		for(final var sdf : formats){
-			try{
-				LOGGER.debug("Trying format `{}`", sdf.toPattern());
-				final var cdate = sdf.parse(name);
-				
-				final var parsedCal = Calendar.getInstance();
-				
-				parsedCal.setTime(cdate);
-				if(parsedCal.get(Calendar.YEAR) < 1970){
-					throw new ParseException("Invalid year", 0);
-				}
-				if(parsedCal.get(Calendar.YEAR) == 1970){
-					parsedCal.set(Calendar.YEAR, currentCal.get(Calendar.YEAR));
-				}
-				
-				date = parsedCal.getTime();
-				LOGGER.debug("Matched date format for {}{}", name, extension);
-				return new NewFile(outputDateFormat.format(date), extension, path.getParent(), date, path);
-			}
-			catch(final ParseException ignored){
-			}
-			catch(final Exception e){
-				LOGGER.error("Error using format {}", sdf, e);
-			}
-		}
-		
-		LOGGER.info("Trying pattern: {}", DATE_PATTERN);
-		final var matcher = DATE_PATTERN.matcher(name);
-		if(matcher.matches()){
-			try{
-				LOGGER.debug("Pattern matched");
-				final var cdate = outputDateFormat.parse(name);
-				final var parsedCal = Calendar.getInstance();
-				
-				parsedCal.setTime(cdate);
-				if(parsedCal.get(Calendar.YEAR) < 1970){
-					throw new ParseException("Invalid year", 0);
-				}
-				if(parsedCal.get(Calendar.YEAR) == 1970){
-					parsedCal.set(Calendar.YEAR, currentCal.get(Calendar.YEAR));
-				}
-				
-				date = parsedCal.getTime();
-				LOGGER.debug("Matched date format for {}{}", name, extension);
-				return new NewFile(outputDateFormat.format(date), extension, path.getParent(), date, path);
-			}
-			catch(final ParseException ignored){
-			}
-			catch(final Exception e){
-				LOGGER.error("Error using format", e);
-			}
-		}
-		
-		LOGGER.warn("Unrecognized date format : {}{}, using file last modified time", name, extension);
-		
-		final var parsedCal = Calendar.getInstance();
-		
-		final var CAL_YEAR = Calendar.YEAR;
-		
-		parsedCal.setTime(date);
-		if(parsedCal.get(CAL_YEAR) <= 1970){
-			parsedCal.set(CAL_YEAR, currentCal.get(CAL_YEAR));
-		}
-		
-		//if(parsedCal.after(currentCal))
-		//	parsedCal.set(CAL_YEAR, parsedCal.get(CAL_YEAR) - 1);
-		
-		return new NewFile(prefix + outputDateFormat.format(parsedCal.getTime()), extension, path.getParent(), date, path);
+		return Optional.empty();
 	}
 	
+	/**
+	 * Get a potential zoneID from the geolocation present in the metadata of the file
+	 *
+	 * @param metadata The metadata.
+	 *
+	 * @return The potential zoneID found.
+	 */
 	private Optional<ZoneId> getZoneIdFromMetadata(final Metadata metadata){
 		try{
 			for(final var gpsDirectory : metadata.getDirectoriesOfType(GpsDirectory.class)){
@@ -234,6 +231,14 @@ public class ByDateRenaming implements RenamingStrategy{
 		return Optional.empty();
 	}
 	
+	/**
+	 * Get the zoneID of a geolocation.
+	 *
+	 * @param latitude  The latitude.
+	 * @param longitude The longitude.
+	 *
+	 * @return The zoneID corresponding to this location.
+	 */
 	private static ZoneId getZoneID(final double latitude, final double longitude){
 		try{
 			final var result = new JSONGetRequestSender("http://api.geonames.org/timezoneJSON?lat=" + latitude + "&lng=" + longitude + "&username=mrcraftcod").getRequestHandler();
@@ -253,18 +258,32 @@ public class ByDateRenaming implements RenamingStrategy{
 		return null;
 	}
 	
+	/**
+	 * Convert a N/E/S/W coordinate to an angle one.
+	 *
+	 * @param s The coordinate to convert.
+	 *
+	 * @return The angle.
+	 */
 	private static Angle getAngle(final String s){
 		final var pattern = Pattern.compile("(\\d{1,3}),(\\d{1,2})\\.(\\d+)([NESW])");
 		final var matcher = pattern.matcher(s);
 		if(matcher.matches()){
 			var angle = Integer.parseInt(matcher.group(1)) + (Integer.parseInt(matcher.group(2)) / 60.0) + (Double.parseDouble("0." + matcher.group(3)) / 60.0);
-			angle *= getMultiplicator(matcher.group(4));
+			angle *= getMultiplicand(matcher.group(4));
 			return Angle.fromDegrees(angle);
 		}
 		return null;
 	}
 	
-	private static double getMultiplicator(final String group){
+	/**
+	 * Get the sign of the angle depending of it's position (N/E/S/W).
+	 *
+	 * @param group The group (N/E/S/W).
+	 *
+	 * @return The sign of the angle.
+	 */
+	private static double getMultiplicand(final String group){
 		switch(group){
 			case "W":
 			case "S":

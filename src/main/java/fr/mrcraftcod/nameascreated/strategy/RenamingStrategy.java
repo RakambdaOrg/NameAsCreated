@@ -1,7 +1,6 @@
 package fr.mrcraftcod.nameascreated.strategy;
 
 import fr.mrcraftcod.nameascreated.NewFile;
-import java.io.IOException;
 import java.nio.file.Path;
 
 /**
@@ -18,6 +17,7 @@ public interface RenamingStrategy{
 	 * @param path The path of the file to rename.
 	 *
 	 * @return The infos about how to rename this file.
+	 * @throws Exception If something went wrong.
 	 */
-	NewFile renameFile(Path path) throws IOException;
+	NewFile renameFile(Path path) throws Exception;
 }
