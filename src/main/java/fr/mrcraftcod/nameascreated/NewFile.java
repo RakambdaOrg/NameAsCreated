@@ -4,7 +4,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import java.io.File;
 import java.nio.file.Path;
-import java.util.Date;
+import java.time.ZonedDateTime;
 
 /**
  * Created by Thomas Couchoud (MrCraftCod - zerderr@gmail.com) on 12/08/2017.
@@ -18,7 +18,7 @@ public class NewFile{
 	private final String name;
 	private final String extension;
 	private final Path parent;
-	private final Date date;
+	private final ZonedDateTime date;
 	private final Path source;
 	public static boolean testMode = false;
 	
@@ -31,7 +31,7 @@ public class NewFile{
 	 * @param fileDate  The creation date of the file.
 	 * @param source    The source file.
 	 */
-	public NewFile(final String name, final String extension, final Path parent, final Date fileDate, final Path source){
+	public NewFile(final String name, final String extension, final Path parent, final ZonedDateTime fileDate, final Path source){
 		this.parent = parent;
 		this.name = name;
 		if(!extension.startsWith(".")){
@@ -91,7 +91,7 @@ public class NewFile{
 	 *
 	 * @return The creation date.
 	 */
-	public Date getDate(){
+	public ZonedDateTime getDate(){
 		return date;
 	}
 	
