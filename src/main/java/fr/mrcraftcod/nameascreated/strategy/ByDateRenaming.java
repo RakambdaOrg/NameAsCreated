@@ -47,7 +47,6 @@ public class ByDateRenaming implements RenamingStrategy{
 	private final DateTimeFormatter outputDateFormat;
 	private final List<DateTimeFormatter> parsingFormats;
 	private final ArrayList<DateExtractor<?>> dateExtractors;
-	private static final Pattern DATE_PATTERN = Pattern.compile("(\\d{4}-\\d{2}-\\d{2} \\d{2}\\.\\d{2}\\.\\d{2}).*");
 	
 	/**
 	 * Constructor.
@@ -70,9 +69,9 @@ public class ByDateRenaming implements RenamingStrategy{
 		parsingFormats.add(DateTimeFormatter.ofPattern("dd MMM yyy, HH:mm:ss", Locale.ENGLISH).withZone(ZoneId.systemDefault()));
 		
 		dateExtractors = new ArrayList<>();
-		dateExtractors.add(new SimpleDateExtractor<>(ExifSubIFDDirectory.class, ExifSubIFDDirectory.TAG_DATETIME_ORIGINAL));
-		dateExtractors.add(new SimpleDateExtractor<>(Mp4Directory.class, Mp4Directory.TAG_CREATION_TIME));
 		dateExtractors.add(new SimpleDateExtractor<>(QuickTimeDirectory.class, QuickTimeDirectory.TAG_CREATION_TIME));
+		dateExtractors.add(new SimpleDateExtractor<>(Mp4Directory.class, Mp4Directory.TAG_CREATION_TIME));
+		dateExtractors.add(new SimpleDateExtractor<>(ExifSubIFDDirectory.class, ExifSubIFDDirectory.TAG_DATETIME_ORIGINAL));
 		dateExtractors.add(new XmpDateExtractor());
 		
 		outputDateFormat = DateTimeFormatter.ofPattern("yyyy-MM-dd HH.mm.ss", Locale.ENGLISH).withZone(ZoneId.systemDefault());
