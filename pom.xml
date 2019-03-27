@@ -5,13 +5,14 @@
     <modelVersion>4.0.0</modelVersion>
 
     <groupId>fr.mrcraftcod</groupId>
-    <artifactId>NameAsCreated</artifactId>
+    <artifactId>nameascreated</artifactId>
     <version>7.4</version>
 
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <java.version>12</java.version>
         <main.class>fr.mrcraftcod.nameascreated.NameAsCreated</main.class>
+        <final.name>NameAsCreated</final.name>
         <log4j.version>2.11.2</log4j.version>
     </properties>
     <packaging>jar</packaging>
@@ -63,7 +64,7 @@
                         <configuration>
                             <shadedArtifactAttached>true</shadedArtifactAttached>
                             <shadedClassifierName>jar-with-dependencies</shadedClassifierName>
-                            <finalName>${project.artifactId}</finalName>
+                            <finalName>${final.name}</finalName>
                             <transformers>
                                 <transformer implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">
                                     <mainClass>${main.class}</mainClass>
@@ -110,7 +111,7 @@
                         </goals>
                         <configuration>
                             <target>
-                                <copy file="${basedir}/target/${project.artifactId}.jar" tofile="${copy.build.path}/${project.artifactId}.jar"/>
+                                <copy file="${basedir}/target/${final.name}.jar" tofile="${copy.build.path}/${final.name}.jar"/>
                             </target>
                         </configuration>
                     </execution>
@@ -140,7 +141,7 @@
         <dependency>
             <groupId>fr.mrcraftcod</groupId>
             <artifactId>utils.http</artifactId>
-            <version>12.0.1</version>
+            <version>12.0.2</version>
         </dependency>
         <dependency>
             <groupId>com.drewnoakes</groupId>
@@ -178,11 +179,6 @@
             <artifactId>junit-jupiter-api</artifactId>
             <version>5.5.0-M1</version>
             <scope>test</scope>
-        </dependency>
-        <dependency>
-            <groupId>org.apache.httpcomponents</groupId>
-            <artifactId>httpcore-nio</artifactId>
-            <version>4.4.11</version>
         </dependency>
     </dependencies>
 </project>
