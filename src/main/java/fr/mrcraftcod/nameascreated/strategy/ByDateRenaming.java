@@ -120,7 +120,7 @@ public class ByDateRenaming implements RenamingStrategy{
 				
 				}
 				catch(final Exception e){
-					LOGGER.error("Error using format {}", dateTimeFormatter, e);
+					LOGGER.error("Error using format {} => {}", dateTimeFormatter, e.getMessage());
 				}
 			}
 		}
@@ -183,7 +183,7 @@ public class ByDateRenaming implements RenamingStrategy{
 						LOGGER.warn("Invalid year with directory {} for file {}", dataExtractor.getKlass().getName(), path);
 					}
 					catch(final Exception e){
-						LOGGER.error("Error processing directory {} for {}{}", dataExtractor.getKlass().getName(), name, extension, e);
+						LOGGER.error("Error processing directory {} for {}{} => {}", dataExtractor.getKlass().getName(), name, extension, e.getMessage());
 					}
 				}
 			}
