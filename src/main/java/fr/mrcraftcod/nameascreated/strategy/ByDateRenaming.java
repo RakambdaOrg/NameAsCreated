@@ -189,7 +189,7 @@ public class ByDateRenaming implements RenamingStrategy{
 			}
 		}
 		catch(final Exception e){
-			LOGGER.error("Error processing metadata for {}{}", name, extension, e);
+			LOGGER.error("Error processing metadata for {}{} => {}", name, extension, e.getMessage());
 		}
 		return Optional.empty();
 	}
