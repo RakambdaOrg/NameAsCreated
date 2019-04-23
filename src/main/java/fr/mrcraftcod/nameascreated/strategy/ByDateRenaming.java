@@ -211,10 +211,13 @@ public class ByDateRenaming implements RenamingStrategy{
 				}
 			}
 			for(final var quickTimeMetadataDirectory : metadata.getDirectoriesOfType(QuickTimeMetadataDirectory.class)){
-				final var location = PointLocationParser.parsePointLocation(quickTimeMetadataDirectory.getString(0x050D));
-				final var zoneId = getZoneID(location.getLatitude().getDegrees(), location.getLongitude().getDegrees());
-				if(Objects.nonNull(zoneId)){
-					return Optional.of(zoneId);
+				final var repr = quickTimeMetadataDirectory.getString(0x050D);
+				if(Objects.nonNull(repr) && !repr.isBlank()){
+					final var location = PointLocationParser.parsePointLocation(repr);
+					final var zoneId = getZoneID(location.getLatitude().getDegrees(), location.getLongitude().getDegrees());
+					if(Objects.nonNull(zoneId)){
+						return Optional.of(zoneId);
+					}
 				}
 			}
 			for(final var xmpDirectory : metadata.getDirectoriesOfType(XmpDirectory.class)){
