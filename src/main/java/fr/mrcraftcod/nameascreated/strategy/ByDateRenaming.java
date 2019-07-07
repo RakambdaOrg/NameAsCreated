@@ -255,8 +255,8 @@ public class ByDateRenaming implements RenamingStrategy{
 			if(result.getStatus() == 200){
 				final var root = result.getRequestResult();
 				if(root != null){
-					if(root.has("timezoneId")){
-						return ZoneId.of(root.getString("timezoneId"));
+					if(root.getObject().has("timezoneId")){
+						return ZoneId.of(root.getObject().getString("timezoneId"));
 					}
 				}
 			}
