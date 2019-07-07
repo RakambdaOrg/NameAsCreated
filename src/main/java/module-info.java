@@ -12,6 +12,7 @@ module fr.mrcraftcod.nameascreated {
 	
 	requires org.slf4j;
 	requires ch.qos.logback.classic;
+	requires org.json;
 	
 	requires unirest.java;
 	requires javafx.base;
