@@ -4,7 +4,6 @@ import com.drew.imaging.ImageMetadataReader;
 import com.drew.metadata.Metadata;
 import com.drew.metadata.exif.ExifSubIFDDirectory;
 import com.drew.metadata.exif.GpsDirectory;
-import com.drew.metadata.file.FileSystemDirectory;
 import com.drew.metadata.mov.QuickTimeDirectory;
 import com.drew.metadata.mov.metadata.QuickTimeMetadataDirectory;
 import com.drew.metadata.mp4.Mp4Directory;
@@ -98,10 +97,8 @@ public class ByDateRenaming implements RenamingStrategy{
 		final var extension = file.getName().substring(file.getName().lastIndexOf('.'));
 		final var name = file.getName().substring(0, file.getName().lastIndexOf('.'));
 		final var attr = Files.readAttributes(path, BasicFileAttributes.class);
-		var createdDate = Instant.ofEpochMilli(attr.lastModifiedTime().toMillis()).atZone(ZoneId.systemDefault());
-		
-		var newFileOptional = processMetadata(path, name, extension);
-		if(newFileOptional.isEmpty()){
+		final var createdDate = Instant.ofEpochMilli(attr.lastModifiedTime().toMillis()).atZone(ZoneId.systemDefault());
+		return processMetadata(path, name, extension).orElseGet(() -> {
 			for(final var dateTimeFormatter : parsingFormats){
 				try{
 					LOGGER.debug("Trying format `{}`", dateTimeFormatter);
@@ -124,15 +121,13 @@ public class ByDateRenaming implements RenamingStrategy{
 					LOGGER.error("Error using format {} => {}", dateTimeFormatter, e.getMessage());
 				}
 			}
-		}
-		
-		LOGGER.warn("Unrecognized date format : {}{}, using file last modified time", name, extension);
-		
-		if(createdDate.getYear() <= 1970){
-			createdDate = createdDate.withYear(LocalDateTime.now().getYear());
-		}
-		
-		return new NewFile(prefix + outputDateFormat.format(createdDate), extension, path.getParent(), createdDate, path);
+			LOGGER.warn("Unrecognized date format : {}{}, using file last modified time", name, extension);
+			var theDate = createdDate;
+			if(createdDate.getYear() <= 1970){
+				theDate = createdDate.withYear(LocalDateTime.now().getYear());
+			}
+			return new NewFile(prefix + outputDateFormat.format(theDate), extension, path.getParent(), theDate, path);
+		});
 	}
 	
 	/**
@@ -159,18 +154,17 @@ public class ByDateRenaming implements RenamingStrategy{
 							var takenDate = dataExtractor.parse(directory, timeZone);
 							if(Objects.nonNull(takenDate)){
 								LOGGER.info("Matched directory {} for {}{}", directory, name, extension);
-								
-								try{
-									for(final var fileDirectory : metadata.getDirectoriesOfType(FileSystemDirectory.class)){
-										final var fileDate = fileDirectory.getDate(FileSystemDirectory.TAG_FILE_MODIFIED_DATE).toInstant().atZone(ZoneId.systemDefault());
-										if(fileDate.isBefore(takenDate)){
-											takenDate = fileDate;
-										}
-									}
-								}
-								catch(final Exception e){
-									LOGGER.warn("Error getting taken date", e);
-								}
+								// try{
+								// 	for(final var fileDirectory : metadata.getDirectoriesOfType(FileSystemDirectory.class)){
+								// 		final var fileDate = fileDirectory.getDate(FileSystemDirectory.TAG_FILE_MODIFIED_DATE).toInstant().atZone(ZoneId.systemDefault());
+								// 		if(fileDate.isBefore(takenDate)){
+								// 			takenDate = fileDate;
+								// 		}
+								// 	}
+								// }
+								// catch(final Exception e){
+								// 	LOGGER.warn("Error getting taken date", e);
+								// }
 								
 								if(takenDate.getYear() < 1970){
 									throw new ParseException("Invalid year", 0);
