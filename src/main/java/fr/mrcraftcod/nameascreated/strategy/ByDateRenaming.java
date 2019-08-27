@@ -42,7 +42,6 @@ import java.util.regex.Pattern;
  */
 public class ByDateRenaming implements RenamingStrategy{
 	private static final Logger LOGGER = LoggerFactory.getLogger(ByDateRenaming.class);
-	
 	private final DateTimeFormatter outputDateFormat;
 	private final List<DateTimeFormatter> parsingFormats;
 	private final ArrayList<DateExtractor<?>> dateExtractors;
@@ -66,14 +65,12 @@ public class ByDateRenaming implements RenamingStrategy{
 		parsingFormats.add(DateTimeFormatter.ofPattern("'Video' dd-MM-yyy, HH mm ss", Locale.ENGLISH).withZone(ZoneId.systemDefault()));
 		parsingFormats.add(DateTimeFormatter.ofPattern("'Video' dd-MM-yyy HH mm ss", Locale.ENGLISH).withZone(ZoneId.systemDefault()));
 		parsingFormats.add(DateTimeFormatter.ofPattern("dd MMM yyy, HH:mm:ss", Locale.ENGLISH).withZone(ZoneId.systemDefault()));
-		
 		dateExtractors = new ArrayList<>();
 		dateExtractors.add(new SimpleDateExtractor<>(QuickTimeMetadataDirectory.class, QuickTimeMetadataDirectory.TAG_CREATION_DATE));
 		dateExtractors.add(new SimpleDateExtractor<>(QuickTimeDirectory.class, QuickTimeDirectory.TAG_CREATION_TIME));
 		dateExtractors.add(new SimpleDateExtractor<>(Mp4Directory.class, Mp4Directory.TAG_CREATION_TIME));
 		dateExtractors.add(new SimpleDateExtractor<>(ExifSubIFDDirectory.class, ExifSubIFDDirectory.TAG_DATETIME_ORIGINAL));
 		dateExtractors.add(new XmpDateExtractor());
-		
 		outputDateFormat = DateTimeFormatter.ofPattern("yyyy-MM-dd HH.mm.ss", Locale.ENGLISH).withZone(ZoneId.systemDefault());
 	}
 	
@@ -103,11 +100,9 @@ public class ByDateRenaming implements RenamingStrategy{
 				try{
 					LOGGER.debug("Trying format `{}`", dateTimeFormatter);
 					final var date = ZonedDateTime.parse(name, dateTimeFormatter);
-					
 					if(date.getYear() < 1970){
 						throw new ParseException("Invalid year", 0);
 					}
-					
 					LOGGER.info("Matched date format for {}{}", name, extension);
 					return new NewFile(outputDateFormat.format(date), extension, path.getParent(), date, path);
 				}
@@ -115,7 +110,6 @@ public class ByDateRenaming implements RenamingStrategy{
 					LOGGER.warn("Invalid year with used format for file {}", path);
 				}
 				catch(final DateTimeParseException ignored){
-				
 				}
 				catch(final Exception e){
 					LOGGER.error("Error using format {} => {}", dateTimeFormatter, e.getMessage());
@@ -145,40 +139,38 @@ public class ByDateRenaming implements RenamingStrategy{
 			if(Objects.nonNull(metadata)){
 				final var zoneID = getZoneIdFromMetadata(metadata).orElse(ZoneId.systemDefault());
 				final var timeZone = TimeZone.getTimeZone(zoneID);
-				
 				for(final var dataExtractor : dateExtractors){
-					try{
-						LOGGER.debug("Trying {}", dataExtractor.getKlass().getName());
-						final var directory = metadata.getFirstDirectoryOfType(dataExtractor.getKlass());
-						if(Objects.nonNull(directory)){
-							var takenDate = dataExtractor.parse(directory, timeZone);
-							if(Objects.nonNull(takenDate)){
-								LOGGER.info("Matched directory {} for {}{}", directory, name, extension);
-								// try{
-								// 	for(final var fileDirectory : metadata.getDirectoriesOfType(FileSystemDirectory.class)){
-								// 		final var fileDate = fileDirectory.getDate(FileSystemDirectory.TAG_FILE_MODIFIED_DATE).toInstant().atZone(ZoneId.systemDefault());
-								// 		if(fileDate.isBefore(takenDate)){
-								// 			takenDate = fileDate;
-								// 		}
-								// 	}
-								// }
-								// catch(final Exception e){
-								// 	LOGGER.warn("Error getting taken date", e);
-								// }
-								
-								if(takenDate.getYear() < 1970){
-									throw new ParseException("Invalid year", 0);
+					for(var directory : metadata.getDirectoriesOfType(dataExtractor.getKlass())){
+						try{
+							LOGGER.debug("Trying {}", dataExtractor.getKlass().getName());
+							if(Objects.nonNull(directory)){
+								var takenDate = dataExtractor.parse(directory, timeZone);
+								if(Objects.nonNull(takenDate)){
+									LOGGER.info("Matched directory {} for {}{}", directory, name, extension);
+									// try{
+									// 	for(final var fileDirectory : metadata.getDirectoriesOfType(FileSystemDirectory.class)){
+									// 		final var fileDate = fileDirectory.getDate(FileSystemDirectory.TAG_FILE_MODIFIED_DATE).toInstant().atZone(ZoneId.systemDefault());
+									// 		if(fileDate.isBefore(takenDate)){
+									// 			takenDate = fileDate;
+									// 		}
+									// 	}
+									// }
+									// catch(final Exception e){
+									// 	LOGGER.warn("Error getting taken date", e);
+									// }
+									if(takenDate.getYear() < 1970){
+										throw new ParseException("Invalid year", 0);
+									}
+									return Optional.of(new NewFile(outputDateFormat.format(takenDate), extension, path.getParent(), takenDate, path));
 								}
-								
-								return Optional.of(new NewFile(outputDateFormat.format(takenDate), extension, path.getParent(), takenDate, path));
 							}
 						}
-					}
-					catch(final ParseException e){
-						LOGGER.warn("Invalid year with directory {} for file {}", dataExtractor.getKlass().getName(), path);
-					}
-					catch(final Exception e){
-						LOGGER.error("Error processing directory {} for {}{} => {}", dataExtractor.getKlass().getName(), name, extension, e.getMessage());
+						catch(final ParseException e){
+							LOGGER.warn("Invalid year with directory {} for file {}", dataExtractor.getKlass().getName(), path);
+						}
+						catch(final Exception e){
+							LOGGER.error("Error processing directory {} for {}{} => {}", dataExtractor.getKlass().getName(), name, extension, e.getMessage());
+						}
 					}
 				}
 			}
