@@ -128,8 +128,9 @@
 
     <distributionManagement>
         <repository>
-            <id>mrcraftcod.write.ftp</id>
-            <url>${mrcraftcod.write.url.ftp}</url>
+            <id>github</id>
+            <name>GitHub RakSrinaNa Apache Maven Packages</name>
+            <url>https://maven.pkg.github.com/RakSrinaNa/NameAsCreated</url>
         </repository>
     </distributionManagement>
     <repositories>
