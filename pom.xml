@@ -7,7 +7,7 @@
     <name>NameAsCreated</name>
     <groupId>fr.mrcraftcod</groupId>
     <artifactId>nameascreated</artifactId>
-    <version>7.14</version>
+    <version>7.15</version>
 
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
