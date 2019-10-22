@@ -6,12 +6,25 @@ plugins {
     id 'com.novoda.build-properties' version '0.4.1'
 }
 
+def secretsFile = new File(".", "secrets.properties")
+
+if (!secretsFile.getParentFile().exists()) {
+    secretsFile.mkdirs()
+}
+
+if (!secretsFile.exists()) {
+    secretsFile.withWriterAppend { w ->
+        w << "\n"
+    }
+}
+
 buildProperties {
     secrets {
-        using project.file('secrets.properties')
-    }
-    env {
-        using System.getenv()
+        using(file('secrets.properties')).or(System.getenv()).or([
+                "MAVEN_HOST"    : "N/A",
+                "MAVEN_USER"    : "N/A",
+                "MAVEN_PASSWORD": "N/A"
+        ])
     }
 }
 
@@ -91,10 +104,10 @@ publishing {
     }
     repositories {
         maven {
-            url = buildProperties.env['MAVEN_HOST'].or(buildProperties.secrets['MAVEN_HOST']).string
+            url = buildProperties.secrets['MAVEN_HOST'].string
             credentials {
-                username = buildProperties.env['MAVEN_USER'].or(buildProperties.secrets['MAVEN_USER']).string
-                password = buildProperties.env['MAVEN_PASSWORD'].or(buildProperties.secrets['MAVEN_PASSWORD']).string
+                username = buildProperties.secrets['MAVEN_USER'].string
+                password = buildProperties.secrets['MAVEN_PASSWORD'].string
             }
         }
     }

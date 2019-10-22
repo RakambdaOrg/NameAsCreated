@@ -35,3 +35,7 @@ jobs:
         uses: MrRamych/gradle-actions/openjdk-12@3.0
         with:
           args: publish
+        env:
+          MAVEN_HOST: ${{ secrets.MAVEN_HOST }}
+          MAVEN_USER: ${{ secrets.MAVEN_USER }}
+          MAVEN_PASSWORD: ${{ secrets.MAVEN_PASSWORD }}
