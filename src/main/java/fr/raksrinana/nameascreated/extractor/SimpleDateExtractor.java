@@ -1,4 +1,4 @@
-package fr.mrcraftcod.nameascreated.extractor;
+package fr.raksrinana.nameascreated.extractor;
 
 import com.drew.metadata.Directory;
 import java.time.ZonedDateTime;

@@ -1,7 +1,7 @@
-package fr.mrcraftcod.nameascreated.renaming;
+package fr.raksrinana.nameascreated.renaming;
 
-import fr.mrcraftcod.nameascreated.NewFile;
-import fr.mrcraftcod.nameascreated.strategy.RenamingStrategy;
+import fr.raksrinana.nameascreated.NewFile;
+import fr.raksrinana.nameascreated.strategy.RenamingStrategy;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import java.nio.file.Path;
@@ -38,7 +38,7 @@ public class RenameIncrementing{
 			return null;
 		}).filter(Objects::nonNull).sorted(Comparator.comparing(NewFile::getDate)).collect(Collectors.toList());
 		for(final var newFile : newFiles){
-			newFile.renameTo(newFile.getParent().resolve(++i + newFile.getExtension()).toFile());
+			newFile.renameTo(newFile.getParent().resolve(i++ + newFile.getExtension()).toFile());
 		}
 	}
 }

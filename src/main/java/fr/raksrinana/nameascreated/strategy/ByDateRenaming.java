@@ -1,4 +1,4 @@
-package fr.mrcraftcod.nameascreated.strategy;
+package fr.raksrinana.nameascreated.strategy;
 
 import com.drew.imaging.ImageMetadataReader;
 import com.drew.metadata.Metadata;
@@ -8,11 +8,11 @@ import com.drew.metadata.mov.QuickTimeDirectory;
 import com.drew.metadata.mov.metadata.QuickTimeMetadataDirectory;
 import com.drew.metadata.mp4.Mp4Directory;
 import com.drew.metadata.xmp.XmpDirectory;
-import fr.mrcraftcod.nameascreated.NewFile;
-import fr.mrcraftcod.nameascreated.extractor.DateExtractor;
-import fr.mrcraftcod.nameascreated.extractor.SimpleDateExtractor;
-import fr.mrcraftcod.nameascreated.extractor.XmpDateExtractor;
 import fr.mrcraftcod.utils.http.requestssenders.get.JSONGetRequestSender;
+import fr.raksrinana.nameascreated.NewFile;
+import fr.raksrinana.nameascreated.extractor.DateExtractor;
+import fr.raksrinana.nameascreated.extractor.SimpleDateExtractor;
+import fr.raksrinana.nameascreated.extractor.XmpDateExtractor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import us.fatehi.pointlocation6709.Angle;

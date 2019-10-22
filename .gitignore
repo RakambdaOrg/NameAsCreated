@@ -1,5 +1,9 @@
-.idea
-target
-test
+.gradle/
+.idea/
+build/
+out/
+target/
+test/
 
 *.iml
+secrets.properties

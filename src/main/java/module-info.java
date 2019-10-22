@@ -4,21 +4,14 @@
  * @author Thomas Couchoud
  * @since 2018-01-23
  */
-module fr.mrcraftcod.nameascreated {
+module fr.raksrinana.nameascreated {
 	requires transitive fr.mrcraftcod.utils.http;
-	
 	requires metadata.extractor;
 	requires pointlocation6709;
-	
 	requires org.slf4j;
 	requires ch.qos.logback.classic;
-	requires org.json;
-	
-	requires unirest.java;
-	requires javafx.base;
-	requires javafx.controls;
-	
-	exports fr.mrcraftcod.nameascreated;
-	exports fr.mrcraftcod.nameascreated.strategy;
-	exports fr.mrcraftcod.nameascreated.extractor;
+	requires jcommander;
+	exports fr.raksrinana.nameascreated;
+	exports fr.raksrinana.nameascreated.strategy;
+	exports fr.raksrinana.nameascreated.extractor;
 }

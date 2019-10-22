@@ -1,6 +1,6 @@
-package fr.mrcraftcod.nameascreated.strategy;
+package fr.raksrinana.nameascreated.strategy;
 
-import fr.mrcraftcod.nameascreated.NewFile;
+import fr.raksrinana.nameascreated.NewFile;
 import java.nio.file.Path;
 
 /**

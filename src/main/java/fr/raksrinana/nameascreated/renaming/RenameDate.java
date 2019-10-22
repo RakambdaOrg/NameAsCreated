@@ -1,6 +1,6 @@
-package fr.mrcraftcod.nameascreated.renaming;
+package fr.raksrinana.nameascreated.renaming;
 
-import fr.mrcraftcod.nameascreated.strategy.RenamingStrategy;
+import fr.raksrinana.nameascreated.strategy.RenamingStrategy;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import java.nio.file.Path;
