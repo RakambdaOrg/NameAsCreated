@@ -23,9 +23,6 @@ if (!secretsFile.exists()) {
 buildProperties {
     secrets {
         using(file('secrets.properties')).or(System.getenv()).or([
-                "MAVEN_HOST"    : "N/A",
-                "MAVEN_USER"    : "N/A",
-                "MAVEN_PASSWORD": "N/A",
                 "GITHUB_TOKEN"  : "N/A"
         ])
     }
