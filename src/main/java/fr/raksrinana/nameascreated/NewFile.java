@@ -1,24 +1,21 @@
 package fr.raksrinana.nameascreated;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import lombok.Getter;
+import lombok.extern.slf4j.Slf4j;
 import java.io.File;
 import java.nio.file.Path;
 import java.time.ZonedDateTime;
 
-/**
- * Created by Thomas Couchoud (MrCraftCod - zerderr@gmail.com) on 12/08/2017.
- *
- * @author Thomas Couchoud
- * @since 2017-08-12
- */
-@SuppressWarnings("WeakerAccess")
+@Slf4j
 public class NewFile{
-	private static final Logger LOGGER = LoggerFactory.getLogger(NewFile.class);
 	private final String name;
+	@Getter
 	private final String extension;
+	@Getter
 	private final Path parent;
+	@Getter
 	private final ZonedDateTime date;
+	@Getter
 	private final Path source;
 	public static boolean testMode = false;
 	
@@ -70,46 +67,10 @@ public class NewFile{
 	 */
 	public void renameTo(final File filePath){
 		if(testMode || this.getSource().toFile().renameTo(filePath)){
-			LOGGER.debug("Renamed {} to {}", this, filePath);
+			log.debug("Renamed {} to {}", this, filePath);
 		}
 		else{
-			LOGGER.debug("Renamed {} to {}", this, filePath);
+			log.debug("Renamed {} to {}", this, filePath);
 		}
-	}
-	
-	/**
-	 * Get the source path.
-	 *
-	 * @return The source path.
-	 */
-	public Path getSource(){
-		return source;
-	}
-	
-	/**
-	 * Get the date of the file.
-	 *
-	 * @return The creation date.
-	 */
-	public ZonedDateTime getDate(){
-		return date;
-	}
-	
-	/**
-	 * Get the extension of this file.
-	 *
-	 * @return The extension.
-	 */
-	public String getExtension(){
-		return extension;
-	}
-	
-	/**
-	 * Get the parent folder.
-	 *
-	 * @return The parent path.
-	 */
-	public Path getParent(){
-		return parent;
 	}
 }

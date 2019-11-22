@@ -1,19 +1,15 @@
 package fr.raksrinana.nameascreated.extractor;
 
 import com.drew.metadata.Directory;
+import lombok.Getter;
 import java.time.ZonedDateTime;
 import java.util.Date;
 import java.util.Optional;
 import java.util.TimeZone;
 
-/**
- * Created by Thomas Couchoud (MrCraftCod - zerderr@gmail.com)
- *
- * @author Thomas Couchoud
- * @since 2018-09-30
- */
 public class SimpleDateExtractor<T extends Directory> implements DateExtractor<T>{
 	private final int tag;
+	@Getter
 	private final Class<T> klass;
 	
 	/**
@@ -30,10 +26,5 @@ public class SimpleDateExtractor<T extends Directory> implements DateExtractor<T
 	@Override
 	public ZonedDateTime parse(final Directory directory, final TimeZone tz){
 		return Optional.ofNullable(directory.getDate(this.tag, tz)).map(Date::toInstant).map(date -> date.atZone(tz.toZoneId())).orElse(null);
-	}
-	
-	@Override
-	public Class<T> getKlass(){
-		return klass;
 	}
 }

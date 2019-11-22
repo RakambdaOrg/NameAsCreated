@@ -5,23 +5,15 @@ import com.beust.jcommander.ParameterException;
 import fr.raksrinana.nameascreated.renaming.RenameDate;
 import fr.raksrinana.nameascreated.renaming.RenameIncrementing;
 import fr.raksrinana.nameascreated.strategy.ByDateRenaming;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import lombok.extern.slf4j.Slf4j;
 import java.nio.file.Path;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Objects;
 import java.util.stream.Collectors;
 
-/**
- * Created by Thomas Couchoud (MrCraftCod - zerderr@gmail.com) on 2018-12-20.
- *
- * @author Thomas Couchoud
- * @since 2018-12-20
- */
+@Slf4j
 public class Main{
-	private static final Logger LOGGER = LoggerFactory.getLogger(Main.class);
-	
 	/**
 	 * Main method.
 	 *
@@ -33,7 +25,7 @@ public class Main{
 			JCommander.newBuilder().addObject(parameters).build().parse(args);
 		}
 		catch(final ParameterException e){
-			LOGGER.error("Failed to parse arguments", e);
+			log.error("Failed to parse arguments", e);
 			e.usage();
 			return;
 		}

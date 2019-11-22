@@ -8,12 +8,6 @@ import java.util.List;
 import java.util.Optional;
 import java.util.TimeZone;
 
-/**
- * Created by Thomas Couchoud (MrCraftCod - zerderr@gmail.com)
- *
- * @author Thomas Couchoud
- * @since 2018-09-30
- */
 public class XmpDateExtractor implements DateExtractor<XmpDirectory>{
 	private final List<String> keys = List.of("xmp:CreateDate", "photoshop:DateCreated");
 	private final DateTimeFormatter dateTimeFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss");

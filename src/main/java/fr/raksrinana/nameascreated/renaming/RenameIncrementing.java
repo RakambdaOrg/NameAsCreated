@@ -2,23 +2,15 @@ package fr.raksrinana.nameascreated.renaming;
 
 import fr.raksrinana.nameascreated.NewFile;
 import fr.raksrinana.nameascreated.strategy.RenamingStrategy;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import lombok.extern.slf4j.Slf4j;
 import java.nio.file.Path;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Objects;
 import java.util.stream.Collectors;
 
-/**
- * Created by Thomas Couchoud (MrCraftCod - zerderr@gmail.com) on 2018-12-20.
- *
- * @author Thomas Couchoud
- * @since 2018-12-20
- */
+@Slf4j
 public class RenameIncrementing{
-	private static final Logger LOGGER = LoggerFactory.getLogger(RenameIncrementing.class);
-	
 	/**
 	 * Rename files with an incrementing number.
 	 *
@@ -33,7 +25,7 @@ public class RenameIncrementing{
 				return renamingStrategy.renameFile(name);
 			}
 			catch(Exception e){
-				LOGGER.error("Error building name", e);
+				log.error("Error building name", e);
 			}
 			return null;
 		}).filter(Objects::nonNull).sorted(Comparator.comparing(NewFile::getDate)).collect(Collectors.toList());

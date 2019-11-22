@@ -11,7 +11,7 @@ jobs:
     steps:
       - uses: actions/checkout@v1
       - name: Build with gradle
-        uses: MrRamych/gradle-actions/openjdk-12@3.0
+        uses: MrRamych/gradle-actions/openjdk-13@3.1
         with:
           args: build
       - name: Deploy on Dropbox
@@ -32,10 +32,8 @@ jobs:
     steps:
       - uses: actions/checkout@v1
       - name: Publish with gradle
-        uses: MrRamych/gradle-actions/openjdk-12@3.0
+        uses: MrRamych/gradle-actions/openjdk-13@3.1
         with:
           args: publish
         env:
-          MAVEN_HOST: ${{ secrets.MAVEN_HOST }}
-          MAVEN_USER: ${{ secrets.MAVEN_USER }}
-          MAVEN_PASSWORD: ${{ secrets.MAVEN_PASSWORD }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

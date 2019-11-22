@@ -1,20 +1,12 @@
 package fr.raksrinana.nameascreated.renaming;
 
 import fr.raksrinana.nameascreated.strategy.RenamingStrategy;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import lombok.extern.slf4j.Slf4j;
 import java.nio.file.Path;
 import java.util.List;
 
-/**
- * Created by Thomas Couchoud (MrCraftCod - zerderr@gmail.com) on 2018-12-20.
- *
- * @author Thomas Couchoud
- * @since 2018-12-20
- */
+@Slf4j
 public class RenameDate{
-	private static final Logger LOGGER = LoggerFactory.getLogger(RenameDate.class);
-	
 	/**
 	 * Rename files with their creation date.
 	 *
@@ -32,18 +24,18 @@ public class RenameDate{
 							continue;
 						}
 						if(fileTo.toFile().exists()){
-							LOGGER.warn("Couldn't rename file {} to {}, file already exists", file, fileTo);
+							log.warn("Couldn't rename file {} to {}, file already exists", file, fileTo);
 							continue;
 						}
 						newFile.renameTo(fileTo.toFile());
 					}
 					catch(final Exception e){
-						LOGGER.error("Error strategy file {}", file, e.getMessage());
+						log.error("Error strategy file {}: {}", file, e.getMessage());
 					}
 				}
 			}
 			catch(final Exception e){
-				LOGGER.error("Error processing file {}", file, e);
+				log.error("Error processing file {}", file, e);
 			}
 		}
 	}

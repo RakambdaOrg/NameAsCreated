@@ -13,8 +13,7 @@ import fr.raksrinana.nameascreated.NewFile;
 import fr.raksrinana.nameascreated.extractor.DateExtractor;
 import fr.raksrinana.nameascreated.extractor.SimpleDateExtractor;
 import fr.raksrinana.nameascreated.extractor.XmpDateExtractor;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import lombok.extern.slf4j.Slf4j;
 import us.fatehi.pointlocation6709.Angle;
 import us.fatehi.pointlocation6709.Latitude;
 import us.fatehi.pointlocation6709.Longitude;
@@ -34,14 +33,8 @@ import java.time.format.DateTimeParseException;
 import java.util.*;
 import java.util.regex.Pattern;
 
-/**
- * Created by Thomas Couchoud (MrCraftCod - zerderr@gmail.com) on 2018-12-20.
- *
- * @author Thomas Couchoud
- * @since 2018-12-20
- */
+@Slf4j
 public class ByDateRenaming implements RenamingStrategy{
-	private static final Logger LOGGER = LoggerFactory.getLogger(ByDateRenaming.class);
 	private final DateTimeFormatter outputDateFormat;
 	private final List<DateTimeFormatter> parsingFormats;
 	private final ArrayList<DateExtractor<?>> dateExtractors;
@@ -98,24 +91,24 @@ public class ByDateRenaming implements RenamingStrategy{
 		return processMetadata(path, name, extension).orElseGet(() -> {
 			for(final var dateTimeFormatter : parsingFormats){
 				try{
-					LOGGER.debug("Trying format `{}`", dateTimeFormatter);
+					log.debug("Trying format `{}`", dateTimeFormatter);
 					final var date = ZonedDateTime.parse(name, dateTimeFormatter);
 					if(date.getYear() < 1970){
 						throw new ParseException("Invalid year", 0);
 					}
-					LOGGER.info("Matched date format for {}{}", name, extension);
+					log.info("Matched date format for {}{}", name, extension);
 					return new NewFile(outputDateFormat.format(date), extension, path.getParent(), date, path);
 				}
 				catch(final ParseException e){
-					LOGGER.warn("Invalid year with used format for file {}", path);
+					log.warn("Invalid year with used format for file {}", path);
 				}
 				catch(final DateTimeParseException ignored){
 				}
 				catch(final Exception e){
-					LOGGER.error("Error using format {} => {}", dateTimeFormatter, e.getMessage());
+					log.error("Error using format {} => {}", dateTimeFormatter, e.getMessage());
 				}
 			}
-			LOGGER.warn("Unrecognized date format : {}{}, using file last modified time", name, extension);
+			log.warn("Unrecognized date format : {}{}, using file last modified time", name, extension);
 			var theDate = createdDate;
 			if(createdDate.getYear() <= 1970){
 				theDate = createdDate.withYear(LocalDateTime.now().getYear());
@@ -142,11 +135,11 @@ public class ByDateRenaming implements RenamingStrategy{
 				for(final var dataExtractor : dateExtractors){
 					for(var directory : metadata.getDirectoriesOfType(dataExtractor.getKlass())){
 						try{
-							LOGGER.debug("Trying {}", dataExtractor.getKlass().getName());
+							log.debug("Trying {}", dataExtractor.getKlass().getName());
 							if(Objects.nonNull(directory)){
 								var takenDate = dataExtractor.parse(directory, timeZone);
 								if(Objects.nonNull(takenDate)){
-									LOGGER.info("Matched directory {} for {}{}", directory, name, extension);
+									log.info("Matched directory {} for {}{}", directory, name, extension);
 									// try{
 									// 	for(final var fileDirectory : metadata.getDirectoriesOfType(FileSystemDirectory.class)){
 									// 		final var fileDate = fileDirectory.getDate(FileSystemDirectory.TAG_FILE_MODIFIED_DATE).toInstant().atZone(ZoneId.systemDefault());
@@ -156,7 +149,7 @@ public class ByDateRenaming implements RenamingStrategy{
 									// 	}
 									// }
 									// catch(final Exception e){
-									// 	LOGGER.warn("Error getting taken date", e);
+									// 	log.warn("Error getting taken date", e);
 									// }
 									if(takenDate.getYear() < 1970){
 										throw new ParseException("Invalid year", 0);
@@ -166,17 +159,17 @@ public class ByDateRenaming implements RenamingStrategy{
 							}
 						}
 						catch(final ParseException e){
-							LOGGER.warn("Invalid year with directory {} for file {}", dataExtractor.getKlass().getName(), path);
+							log.warn("Invalid year with directory {} for file {}", dataExtractor.getKlass().getName(), path);
 						}
 						catch(final Exception e){
-							LOGGER.error("Error processing directory {} for {}{} => {}", dataExtractor.getKlass().getName(), name, extension, e.getMessage());
+							log.error("Error processing directory {} for {}{} => {}", dataExtractor.getKlass().getName(), name, extension, e.getMessage());
 						}
 					}
 				}
 			}
 		}
 		catch(final Exception e){
-			LOGGER.error("Error processing metadata for {}{} => {}", name, extension, e.getMessage());
+			log.error("Error processing metadata for {}{} => {}", name, extension, e.getMessage());
 		}
 		return Optional.empty();
 	}
@@ -223,7 +216,7 @@ public class ByDateRenaming implements RenamingStrategy{
 			}
 		}
 		catch(final Exception e){
-			LOGGER.warn("Error getting GPS infos", e);
+			log.warn("Error getting GPS infos", e);
 		}
 		return Optional.empty();
 	}
@@ -249,7 +242,7 @@ public class ByDateRenaming implements RenamingStrategy{
 			}
 		}
 		catch(final Exception e){
-			LOGGER.error("Error getting zoneID for coordinates {};{}", latitude, longitude, e);
+			log.error("Error getting zoneID for coordinates {};{}", latitude, longitude, e);
 		}
 		return null;
 	}

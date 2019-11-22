@@ -5,12 +5,7 @@ import java.time.ZonedDateTime;
 import java.util.TimeZone;
 
 /**
- * Created by Thomas Couchoud (MrCraftCod - zerderr@gmail.com)
- *
  * @param <T> The directory type.
- *
- * @author Thomas Couchoud
- * @since 2018-09-30
  */
 public interface DateExtractor<T extends Directory>{
 	/**
