@@ -23,7 +23,8 @@ if (!secretsFile.exists()) {
 buildProperties {
     secrets {
         using(file('secrets.properties')).or(System.getenv()).or([
-                "GITHUB_TOKEN"  : "N/A"
+                "GITHUB_USER" : "N/A",
+                "GITHUB_TOKEN": "N/A"
         ])
     }
 }
@@ -99,7 +100,7 @@ publishing {
             name = "GitHubPackages"
             url = uri("https://maven.pkg.github.com/RakSrinaNa/NameAsCreated")
             credentials {
-                username = "RakSrinaNa"
+                username = buildProperties.secrets['GITHUB_USER'].string
                 password = buildProperties.secrets['GITHUB_TOKEN'].string
             }
         }
