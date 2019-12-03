@@ -1,5 +1,6 @@
 module fr.raksrinana.nameascreated {
-	requires transitive fr.mrcraftcod.utils.http;
+	requires transitive fr.raksrinana.utils.http;
+	requires unirest.java;
 	requires metadata.extractor;
 	requires pointlocation6709;
 	requires org.slf4j;

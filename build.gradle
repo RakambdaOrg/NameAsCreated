@@ -41,7 +41,8 @@ dependencies {
     implementation("ch.qos.logback:logback-classic:${project.logback_version}") {
         exclude group: 'edu.washington.cs.types.checker', module: 'checker-framework'
     }
-    implementation("fr.mrcraftcod:utils.http:${project.raksrinana_utils_version}")
+    implementation("fr.raksrinana:utils.http:${project.raksrinana_utils_version}")
+    implementation("com.konghq:unirest-java:${project.unirest_version}")
 
     implementation("com.drewnoakes:metadata-extractor:${project.metadata_extractor_version}")
     implementation("us.fatehi:pointlocation6709:${project.pointlocation6709_version}")
