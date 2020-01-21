@@ -1,4 +1,4 @@
-module fr.raksrinana.nameascreated {
+open module fr.raksrinana.nameascreated {
 	requires transitive fr.raksrinana.utils.http;
 	requires unirest.java;
 	requires metadata.extractor;

@@ -1,6 +1,7 @@
 package fr.raksrinana.nameascreated.renaming;
 
 import fr.raksrinana.nameascreated.strategy.RenamingStrategy;
+import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
 import java.nio.file.Path;
 import java.util.List;
@@ -13,13 +14,13 @@ public class RenameDate{
 	 * @param renamingStrategy The strategy to rename the files.
 	 * @param files            The list of files to modify.
 	 */
-	public static void processFiles(final RenamingStrategy renamingStrategy, final List<Path> files){
+	public static void processFiles(@NonNull final RenamingStrategy renamingStrategy, @NonNull final List<Path> files){
 		for(final var file : files){
 			try{
 				if(file.toFile().exists() && file.toFile().isFile() && file.toFile().getName().contains(".") && !file.toFile().getName().startsWith(".")){
 					try{
 						final var newFile = renamingStrategy.renameFile(file);
-						final var fileTo = file.getParent().resolve(newFile.getName(file.toFile()));
+						final var fileTo = file.getParent().resolve(newFile.getName(file));
 						if(fileTo.toFile().getName().equals(file.toFile().getName())){
 							continue;
 						}
@@ -27,7 +28,7 @@ public class RenameDate{
 							log.warn("Couldn't rename file {} to {}, file already exists", file, fileTo);
 							continue;
 						}
-						newFile.renameTo(fileTo.toFile());
+						newFile.moveTo(fileTo);
 					}
 					catch(final Exception e){
 						log.error("Error strategy file {}: {}", file, e.getMessage());

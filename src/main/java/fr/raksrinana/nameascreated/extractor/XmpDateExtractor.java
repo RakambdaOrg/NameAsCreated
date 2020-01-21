@@ -2,6 +2,7 @@ package fr.raksrinana.nameascreated.extractor;
 
 import com.drew.metadata.Directory;
 import com.drew.metadata.xmp.XmpDirectory;
+import lombok.NonNull;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
@@ -12,26 +13,24 @@ public class XmpDateExtractor implements DateExtractor<XmpDirectory>{
 	private final List<String> keys = List.of("xmp:CreateDate", "photoshop:DateCreated");
 	private final DateTimeFormatter dateTimeFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss");
 	
+	@NonNull
 	@Override
-	public ZonedDateTime parse(final Directory directory, final TimeZone tz){
+	public Optional<ZonedDateTime> parse(@NonNull final Directory directory, @NonNull final TimeZone tz){
 		final var xmpDirectory = (XmpDirectory) directory;
 		final var values = xmpDirectory.getXmpProperties();
-		for(final var key : keys)
-		{
-			if(values.containsKey(key))
-			{
-				try
-				{
-					return Optional.ofNullable(values.get(key)).map(date -> ZonedDateTime.parse(date, dateTimeFormatter.withZone(tz.toZoneId()))).orElse(null);
+		for(final var key : keys){
+			if(values.containsKey(key)){
+				try{
+					return Optional.ofNullable(values.get(key)).map(date -> ZonedDateTime.parse(date, dateTimeFormatter.withZone(tz.toZoneId())));
 				}
-				catch(final Exception ignored)
-				{
+				catch(final Exception ignored){
 				}
 			}
 		}
-		return null;
+		return Optional.empty();
 	}
 	
+	@NonNull
 	@Override
 	public Class<XmpDirectory> getKlass(){
 		return XmpDirectory.class;

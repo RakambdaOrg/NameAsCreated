@@ -5,6 +5,7 @@ import com.beust.jcommander.ParameterException;
 import fr.raksrinana.nameascreated.renaming.RenameDate;
 import fr.raksrinana.nameascreated.renaming.RenameIncrementing;
 import fr.raksrinana.nameascreated.strategy.ByDateRenaming;
+import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
 import java.nio.file.Path;
 import java.util.LinkedList;
@@ -49,7 +50,8 @@ public class Main{
 	 *
 	 * @return A list of paths.
 	 */
-	private static List<Path> listFiles(final Path folder, boolean recursive){
+	@NonNull
+	private static List<Path> listFiles(@NonNull final Path folder, boolean recursive){
 		final var files = new LinkedList<Path>();
 		for(final var file : Objects.requireNonNull(folder.toFile().listFiles())){
 			if(file.isDirectory()){

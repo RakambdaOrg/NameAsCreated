@@ -1,8 +1,10 @@
 package fr.raksrinana.nameascreated;
 
 import lombok.Getter;
+import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
-import java.io.File;
+import java.io.IOException;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.ZonedDateTime;
 
@@ -28,7 +30,7 @@ public class NewFile{
 	 * @param fileDate  The creation date of the file.
 	 * @param source    The source file.
 	 */
-	public NewFile(final String name, final String extension, final Path parent, final ZonedDateTime fileDate, final Path source){
+	public NewFile(@NonNull final String name, @NonNull final String extension, @NonNull final Path parent, @NonNull final ZonedDateTime fileDate, @NonNull final Path source){
 		this.parent = parent;
 		this.name = name;
 		if(!extension.startsWith(".")){
@@ -42,19 +44,20 @@ public class NewFile{
 	/**
 	 * Get the new name of the file to put it in a folder.
 	 *
-	 * @param file The folder where to put the file in.
+	 * @param directory The folder where to put the file in.
 	 *
 	 * @return The new name.
 	 */
-	public String getName(final File file){
-		if(file == null || (name + extension).equalsIgnoreCase(file.getName())){
+	@NonNull
+	public String getName(final Path directory){
+		if(directory == null || (name + extension).equalsIgnoreCase(directory.getFileName().toString())){
 			return name + extension;
 		}
-		if(!new File(file.getParentFile(), name + extension).exists()){
+		if(!directory.resolve(name + extension).toFile().exists()){
 			return name + extension;
 		}
 		var i = 1;
-		while(new File(file.getParentFile(), String.format("%s (%d)%s", name, i, extension)).exists()){
+		while(directory.resolve(String.format("%s (%d)%s", name, i, extension)).toFile().exists()){
 			i++;
 		}
 		return String.format("%s (%d)%s", name, i, extension);
@@ -63,14 +66,20 @@ public class NewFile{
 	/**
 	 * Rename this file to the given file.
 	 *
-	 * @param filePath The file to rename it to.
+	 * @param target The file to rename it to.
 	 */
-	public void renameTo(final File filePath){
-		if(testMode || this.getSource().toFile().renameTo(filePath)){
-			log.debug("Renamed {} to {}", this, filePath);
+	public void moveTo(@NonNull final Path target){
+		if(!testMode){
+			try{
+				Files.move(this.getSource(), target);
+				log.debug("Renamed {} to {}", this, target);
+			}
+			catch(IOException e){
+				log.error("Failed to move {} to {}", this, target, e);
+			}
 		}
 		else{
-			log.debug("Renamed {} to {}", this, filePath);
+			log.debug("Renamed {} to {}", this, target);
 		}
 	}
 }

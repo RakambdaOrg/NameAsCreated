@@ -13,6 +13,7 @@ import fr.raksrinana.nameascreated.extractor.DateExtractor;
 import fr.raksrinana.nameascreated.extractor.SimpleDateExtractor;
 import fr.raksrinana.nameascreated.extractor.XmpDateExtractor;
 import fr.raksrinana.utils.http.requestssenders.get.JSONGetRequestSender;
+import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
 import us.fatehi.pointlocation6709.Angle;
 import us.fatehi.pointlocation6709.Latitude;
@@ -37,7 +38,7 @@ import java.util.regex.Pattern;
 public class ByDateRenaming implements RenamingStrategy{
 	private final DateTimeFormatter outputDateFormat;
 	private final List<DateTimeFormatter> parsingFormats;
-	private final ArrayList<DateExtractor<?>> dateExtractors;
+	private final List<DateExtractor<?>> dateExtractors;
 	
 	/**
 	 * Constructor.
@@ -74,18 +75,19 @@ public class ByDateRenaming implements RenamingStrategy{
 	 * @param dateExtractors   The extractors to extract data from the dictionaries of the file.
 	 * @param outputDateFormat The output format.
 	 */
-	public ByDateRenaming(final List<DateTimeFormatter> parsingFormats, final ArrayList<DateExtractor<?>> dateExtractors, final DateTimeFormatter outputDateFormat){
+	public ByDateRenaming(@NonNull final List<DateTimeFormatter> parsingFormats, @NonNull final List<DateExtractor<?>> dateExtractors, @NonNull final DateTimeFormatter outputDateFormat){
 		this.parsingFormats = parsingFormats;
 		this.dateExtractors = dateExtractors;
 		this.outputDateFormat = outputDateFormat;
 	}
 	
 	@Override
-	public NewFile renameFile(final Path path) throws IOException{
-		final var file = path.toFile();
+	@NonNull
+	public NewFile renameFile(@NonNull final Path path) throws IOException{
+		final var filename = path.getFileName().toString();
 		final var prefix = "";
-		final var extension = file.getName().substring(file.getName().lastIndexOf('.'));
-		final var name = file.getName().substring(0, file.getName().lastIndexOf('.'));
+		final var extension = filename.substring(filename.lastIndexOf('.'));
+		final var name = filename.substring(0, filename.lastIndexOf('.'));
 		final var attr = Files.readAttributes(path, BasicFileAttributes.class);
 		final var createdDate = Instant.ofEpochMilli(attr.lastModifiedTime().toMillis()).atZone(ZoneId.systemDefault());
 		return processMetadata(path, name, extension).orElseGet(() -> {
@@ -126,7 +128,8 @@ public class ByDateRenaming implements RenamingStrategy{
 	 *
 	 * @return A potential newFile object.
 	 */
-	private Optional<NewFile> processMetadata(Path path, String name, String extension){
+	@NonNull
+	private Optional<NewFile> processMetadata(@NonNull Path path, @NonNull String name, @NonNull String extension){
 		try{
 			final var metadata = ImageMetadataReader.readMetadata(path.toFile());
 			if(Objects.nonNull(metadata)){
@@ -137,20 +140,10 @@ public class ByDateRenaming implements RenamingStrategy{
 						try{
 							log.debug("Trying {}", dataExtractor.getKlass().getName());
 							if(Objects.nonNull(directory)){
-								var takenDate = dataExtractor.parse(directory, timeZone);
-								if(Objects.nonNull(takenDate)){
+								var takenDateOptional = dataExtractor.parse(directory, timeZone);
+								if(takenDateOptional.isPresent()){
+									final var takenDate = takenDateOptional.get();
 									log.info("Matched directory {} for {}{}", directory, name, extension);
-									// try{
-									// 	for(final var fileDirectory : metadata.getDirectoriesOfType(FileSystemDirectory.class)){
-									// 		final var fileDate = fileDirectory.getDate(FileSystemDirectory.TAG_FILE_MODIFIED_DATE).toInstant().atZone(ZoneId.systemDefault());
-									// 		if(fileDate.isBefore(takenDate)){
-									// 			takenDate = fileDate;
-									// 		}
-									// 	}
-									// }
-									// catch(final Exception e){
-									// 	log.warn("Error getting taken date", e);
-									// }
 									if(takenDate.getYear() < 1970){
 										throw new ParseException("Invalid year", 0);
 									}
@@ -181,13 +174,14 @@ public class ByDateRenaming implements RenamingStrategy{
 	 *
 	 * @return The potential zoneID found.
 	 */
-	private Optional<ZoneId> getZoneIdFromMetadata(final Metadata metadata){
+	@NonNull
+	private Optional<ZoneId> getZoneIdFromMetadata(@NonNull final Metadata metadata){
 		try{
 			for(final var gpsDirectory : metadata.getDirectoriesOfType(GpsDirectory.class)){
 				final var location = gpsDirectory.getGeoLocation();
 				final var zoneId = getZoneID(location.getLatitude(), location.getLongitude());
-				if(Objects.nonNull(zoneId)){
-					return Optional.of(zoneId);
+				if(zoneId.isPresent()){
+					return zoneId;
 				}
 			}
 			for(final var quickTimeMetadataDirectory : metadata.getDirectoriesOfType(QuickTimeMetadataDirectory.class)){
@@ -195,22 +189,20 @@ public class ByDateRenaming implements RenamingStrategy{
 				if(Objects.nonNull(repr) && !repr.isBlank()){
 					final var location = PointLocationParser.parsePointLocation(repr);
 					final var zoneId = getZoneID(location.getLatitude().getDegrees(), location.getLongitude().getDegrees());
-					if(Objects.nonNull(zoneId)){
-						return Optional.of(zoneId);
+					if(zoneId.isPresent()){
+						return zoneId;
 					}
 				}
 			}
 			for(final var xmpDirectory : metadata.getDirectoriesOfType(XmpDirectory.class)){
 				final var xmpValues = xmpDirectory.getXmpProperties();
 				if(xmpValues.containsKey("exif:GPSLatitude") && xmpValues.containsKey("exif:GPSLongitude")){
-					final var lat = getAngle(xmpValues.get("exif:GPSLatitude"));
-					final var lon = getAngle(xmpValues.get("exif:GPSLongitude"));
-					if(lat != null && lon != null){
+					final var zoneId = getAngle(xmpValues.get("exif:GPSLatitude")).flatMap(lat -> getAngle(xmpValues.get("exif:GPSLongitude")).flatMap(lon -> {
 						final var location = new PointLocation(new Latitude(lat), new Longitude(lon));
-						final var zoneId = getZoneID(location.getLatitude().getDegrees(), location.getLongitude().getDegrees());
-						if(Objects.nonNull(zoneId)){
-							return Optional.of(zoneId);
-						}
+						return getZoneID(location.getLatitude().getDegrees(), location.getLongitude().getDegrees());
+					}));
+					if(zoneId.isPresent()){
+						return zoneId;
 					}
 				}
 			}
@@ -229,14 +221,15 @@ public class ByDateRenaming implements RenamingStrategy{
 	 *
 	 * @return The zoneID corresponding to this location.
 	 */
-	private static ZoneId getZoneID(final double latitude, final double longitude){
+	@NonNull
+	private static Optional<ZoneId> getZoneID(final double latitude, final double longitude){
 		try{
 			final var result = new JSONGetRequestSender("http://api.geonames.org/timezoneJSON?lat=" + latitude + "&lng=" + longitude + "&username=mrcraftcod").getRequestHandler();
 			if(result.getStatus() == 200){
 				final var root = result.getRequestResult();
 				if(root != null){
 					if(root.getObject().has("timezoneId")){
-						return ZoneId.of(root.getObject().getString("timezoneId"));
+						return Optional.ofNullable(ZoneId.of(root.getObject().getString("timezoneId")));
 					}
 				}
 			}
@@ -244,7 +237,7 @@ public class ByDateRenaming implements RenamingStrategy{
 		catch(final Exception e){
 			log.error("Error getting zoneID for coordinates {};{}", latitude, longitude, e);
 		}
-		return null;
+		return Optional.empty();
 	}
 	
 	/**
@@ -254,15 +247,16 @@ public class ByDateRenaming implements RenamingStrategy{
 	 *
 	 * @return The angle.
 	 */
-	private static Angle getAngle(final String s){
+	@NonNull
+	private static Optional<Angle> getAngle(@NonNull final String s){
 		final var pattern = Pattern.compile("(\\d{1,3}),(\\d{1,2})\\.(\\d+)([NESW])");
 		final var matcher = pattern.matcher(s);
 		if(matcher.matches()){
 			var angle = Integer.parseInt(matcher.group(1)) + (Integer.parseInt(matcher.group(2)) / 60.0) + (Double.parseDouble("0." + matcher.group(3)) / 60.0);
 			angle *= getMultiplicand(matcher.group(4));
-			return Angle.fromDegrees(angle);
+			return Optional.of(Angle.fromDegrees(angle));
 		}
-		return null;
+		return Optional.empty();
 	}
 	
 	/**
@@ -272,7 +266,7 @@ public class ByDateRenaming implements RenamingStrategy{
 	 *
 	 * @return The sign of the angle.
 	 */
-	private static double getMultiplicand(final String group){
+	private static double getMultiplicand(@NonNull final String group){
 		switch(group){
 			case "W":
 			case "S":

@@ -1,7 +1,9 @@
 package fr.raksrinana.nameascreated.extractor;
 
 import com.drew.metadata.Directory;
+import lombok.NonNull;
 import java.time.ZonedDateTime;
+import java.util.Optional;
 import java.util.TimeZone;
 
 /**
@@ -16,12 +18,12 @@ public interface DateExtractor<T extends Directory>{
 	 *
 	 * @return The date or null if not found.
 	 */
-	ZonedDateTime parse(Directory directory, TimeZone tz);
+	@NonNull Optional<ZonedDateTime> parse(@NonNull Directory directory, @NonNull TimeZone tz);
 	
 	/**
 	 * Get the class of the directory.
 	 *
 	 * @return The directory's class.
 	 */
-	Class<T> getKlass();
+	@NonNull Class<T> getKlass();
 }
