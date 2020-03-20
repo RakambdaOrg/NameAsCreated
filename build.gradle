@@ -1,6 +1,6 @@
 plugins {
     id 'com.github.johnrengelman.shadow' version '5.2.0'
-    id "com.github.ben-manes.versions" version '0.27.0'
+    id "com.github.ben-manes.versions" version '0.28.0'
     id 'java'
     id 'application'
     id 'maven-publish'
@@ -31,7 +31,7 @@ buildProperties {
 
 group = 'fr.raksrinana'
 description = 'NameAsCreated'
-sourceCompatibility = targetCompatibility = JavaVersion.VERSION_13
+sourceCompatibility = targetCompatibility = JavaVersion.VERSION_14
 
 ext.moduleName = project.moduleName
 mainClassName = project.mainClass
@@ -43,6 +43,10 @@ dependencies {
     }
     implementation("fr.raksrinana:utils.http:${project.raksrinana_utils_version}")
     implementation("com.konghq:unirest-java:${project.unirest_version}")
+
+    implementation("com.fasterxml.jackson.core:jackson-core:${project.jackson_version}")
+    implementation("com.fasterxml.jackson.core:jackson-annotations:${project.jackson_version}")
+    implementation("com.fasterxml.jackson.core:jackson-databind:${project.jackson_version}")
 
     implementation("com.drewnoakes:metadata-extractor:${project.metadata_extractor_version}")
     implementation("us.fatehi:pointlocation6709:${project.pointlocation6709_version}")
@@ -100,6 +104,10 @@ shadowJar {
 
 tasks.withType(JavaCompile) {
     options.encoding = 'UTF-8'
+}
+
+tasks.withType(Wrapper) {
+    gradleVersion = project.wrapper_version
 }
 
 publishing {

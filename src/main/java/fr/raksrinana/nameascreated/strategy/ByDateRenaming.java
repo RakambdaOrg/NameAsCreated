@@ -12,7 +12,10 @@ import fr.raksrinana.nameascreated.NewFile;
 import fr.raksrinana.nameascreated.extractor.DateExtractor;
 import fr.raksrinana.nameascreated.extractor.SimpleDateExtractor;
 import fr.raksrinana.nameascreated.extractor.XmpDateExtractor;
-import fr.raksrinana.utils.http.requestssenders.get.JSONGetRequestSender;
+import fr.raksrinana.nameascreated.utils.GeonamesTimeZone;
+import fr.raksrinana.utils.http.requestssenders.get.ObjectGetRequestSender;
+import kong.unirest.GenericType;
+import kong.unirest.Unirest;
 import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
 import us.fatehi.pointlocation6709.Angle;
@@ -224,14 +227,10 @@ public class ByDateRenaming implements RenamingStrategy{
 	@NonNull
 	private static Optional<ZoneId> getZoneID(final double latitude, final double longitude){
 		try{
-			final var result = new JSONGetRequestSender("http://api.geonames.org/timezoneJSON?lat=" + latitude + "&lng=" + longitude + "&username=mrcraftcod").getRequestHandler();
-			if(result.getStatus() == 200){
-				final var root = result.getRequestResult();
-				if(root != null){
-					if(root.getObject().has("timezoneId")){
-						return Optional.ofNullable(ZoneId.of(root.getObject().getString("timezoneId")));
-					}
-				}
+			final var result = new ObjectGetRequestSender<>(new GenericType<GeonamesTimeZone>(){}, Unirest.get("http://api.geonames.org/timezoneJSON?lat={lat}&lng={lon}&username=mrcraftcod").queryString("lat", latitude).queryString("lon", longitude)).getRequestHandler();
+			if(result.getResult().isSuccess()){
+				final var geonamesTimeZone = result.getRequestResult();
+				return Optional.ofNullable(geonamesTimeZone.getTimezoneId());
 			}
 		}
 		catch(final Exception e){

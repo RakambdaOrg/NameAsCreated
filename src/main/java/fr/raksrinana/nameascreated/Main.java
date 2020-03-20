@@ -5,6 +5,8 @@ import com.beust.jcommander.ParameterException;
 import fr.raksrinana.nameascreated.renaming.RenameDate;
 import fr.raksrinana.nameascreated.renaming.RenameIncrementing;
 import fr.raksrinana.nameascreated.strategy.ByDateRenaming;
+import fr.raksrinana.utils.http.JacksonObjectMapper;
+import kong.unirest.Unirest;
 import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
 import java.nio.file.Path;
@@ -30,6 +32,7 @@ public class Main{
 			e.usage();
 			return;
 		}
+		Unirest.config().setObjectMapper(new JacksonObjectMapper()).connectTimeout(30000).socketTimeout(30000).enableCookieManagement(true).verifySsl(true);
 		NewFile.testMode = parameters.isTestMode();
 		final var files = parameters.getFiles().stream().flatMap(f -> listFiles(f, parameters.isRecursive()).stream()).distinct().collect(Collectors.toList());
 		switch(parameters.getRunMode()){

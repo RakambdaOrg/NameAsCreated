@@ -6,6 +6,9 @@ open module fr.raksrinana.nameascreated {
 	requires org.slf4j;
 	requires ch.qos.logback.classic;
 	requires jcommander;
+	requires com.fasterxml.jackson.annotation;
+	requires com.fasterxml.jackson.databind;
+	requires com.google.gson;
 	requires static lombok;
 	exports fr.raksrinana.nameascreated;
 	exports fr.raksrinana.nameascreated.strategy;
