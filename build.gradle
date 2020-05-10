@@ -1,7 +1,9 @@
 plugins {
     id 'com.github.johnrengelman.shadow' version '5.2.0'
     id "com.github.ben-manes.versions" version '0.28.0'
+    id 'idea'
     id 'java'
+    id 'java-library'
     id 'application'
     id 'maven-publish'
     id 'com.novoda.build-properties' version '0.4.1'
@@ -33,25 +35,24 @@ group = 'fr.raksrinana'
 description = 'NameAsCreated'
 sourceCompatibility = targetCompatibility = JavaVersion.VERSION_14
 
-ext.moduleName = project.moduleName
 mainClassName = project.mainClass
 
 dependencies {
-    implementation("org.slf4j:slf4j-api:${project.slf4j_version}")
-    implementation("ch.qos.logback:logback-classic:${project.logback_version}") {
+    api("org.slf4j:slf4j-api:${project.slf4j_version}")
+    api("ch.qos.logback:logback-classic:${project.logback_version}") {
         exclude group: 'edu.washington.cs.types.checker', module: 'checker-framework'
     }
-    implementation("fr.raksrinana:utils.http:${project.raksrinana_utils_version}")
-    implementation("com.konghq:unirest-java:${project.unirest_version}")
+    api("fr.raksrinana:utils.http:${project.raksrinana_utils_version}")
+    api("com.konghq:unirest-java:${project.unirest_version}")
 
-    implementation("com.fasterxml.jackson.core:jackson-core:${project.jackson_version}")
-    implementation("com.fasterxml.jackson.core:jackson-annotations:${project.jackson_version}")
-    implementation("com.fasterxml.jackson.core:jackson-databind:${project.jackson_version}")
+    api("com.fasterxml.jackson.core:jackson-core:${project.jackson_version}")
+    api("com.fasterxml.jackson.core:jackson-annotations:${project.jackson_version}")
+    api("com.fasterxml.jackson.core:jackson-databind:${project.jackson_version}")
 
-    implementation("com.drewnoakes:metadata-extractor:${project.metadata_extractor_version}")
-    implementation("us.fatehi:pointlocation6709:${project.pointlocation6709_version}")
+    api("com.drewnoakes:metadata-extractor:${project.metadata_extractor_version}")
+    api("us.fatehi:pointlocation6709:${project.pointlocation6709_version}")
 
-    implementation("com.beust:jcommander:${project.jcommander_version}")
+    api("com.beust:jcommander:${project.jcommander_version}")
 }
 
 repositories {
@@ -90,16 +91,18 @@ compileJava {
     }
 }
 
-jar {
-    manifest {
-        attributes 'Main-Class': project.mainClass
-    }
+application {
+    mainModule = project.moduleName
+    mainClass = project.mainClass
+}
+
+java {
+    modularity.inferModulePath.set(true)
 }
 
 shadowJar {
-    baseName = project.name
+    archivesBaseName = project.name
     classifier = 'shaded'
-    version = null
 }
 
 tasks.withType(JavaCompile) {
