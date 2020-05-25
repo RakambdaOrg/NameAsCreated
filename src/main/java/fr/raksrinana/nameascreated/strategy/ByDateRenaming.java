@@ -227,7 +227,7 @@ public class ByDateRenaming implements RenamingStrategy{
 	@NonNull
 	private static Optional<ZoneId> getZoneID(final double latitude, final double longitude){
 		try{
-			final var result = new ObjectGetRequestSender<>(new GenericType<GeonamesTimeZone>(){}, Unirest.get("http://api.geonames.org/timezoneJSON?lat={lat}&lng={lon}&username=mrcraftcod").queryString("lat", latitude).queryString("lon", longitude)).getRequestHandler();
+			final var result = new ObjectGetRequestSender<>(new GenericType<GeonamesTimeZone>(){}, Unirest.get("http://api.geonames.org/timezoneJSON").queryString("lat", latitude).queryString("lng", longitude).queryString("username", "mrcraftcod")).getRequestHandler();
 			if(result.getResult().isSuccess()){
 				final var geonamesTimeZone = result.getRequestResult();
 				return Optional.ofNullable(geonamesTimeZone.getTimezoneId());
