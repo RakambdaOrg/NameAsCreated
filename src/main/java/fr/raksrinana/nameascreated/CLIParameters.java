@@ -1,44 +1,35 @@
 package fr.raksrinana.nameascreated;
 
-import com.beust.jcommander.Parameter;
-import com.beust.jcommander.converters.PathConverter;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import picocli.CommandLine;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 
 @NoArgsConstructor
+@Getter
+@CommandLine.Command(name = "nameascreated", mixinStandardHelpOptions = true)
 public class CLIParameters{
-	@Parameter(description = "The files or folders to process", listConverter = PathConverter.class)
-	@Getter
+	@CommandLine.Parameters(description = "The files or folders to process")
 	private List<Path> files = new ArrayList<>();
-	@Parameter(names = {
+	@CommandLine.Option(names = {
 			"-m",
 			"--mode"
 	}, description = "The mode to use to rename")
-	@Getter
 	private RunMode runMode = RunMode.DATE;
-	@Parameter(names = {
+	@CommandLine.Option(names = {
 			"-r",
 			"--recursive"
-	}, description = "Set the status of the recursion to list files", arity = 1)
-	@Getter
+	}, description = "Set the status of the recursion to list files", arity = "1")
 	private boolean recursive = true;
-	@Parameter(names = {
+	@CommandLine.Option(names = {
 			"-t",
 			"--test"
 	}, description = "Run the program in test move (no operations on the files will be executed)")
-	@Getter
 	private boolean testMode = false;
-	@Parameter(names = {
+	@CommandLine.Option(names = {
 			"--start-index"
 	}, description = "The start index when renaming a sequence")
-	@Getter
 	private int startIndex = 1;
-	@Parameter(names = {
-			"-h",
-			"--help"
-	}, help = true)
-	private boolean help = false;
 }

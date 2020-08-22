@@ -29,8 +29,10 @@ jobs:
         with:
           path: ~/.gradle/wrapper
           key: ${{ runner.os }}-gradle-${{ hashFiles('gradle/wrapper/gradle-wrapper.properties') }}
+      - name: Set wrapper permissions
+        run: chmod +x gradlew
       - name: Build app
-        run: chmod +x gradlew && ./gradlew build
+        run: ./gradlew build
         env:
           GITHUB_USER: RakSrinaNa
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -70,8 +72,10 @@ jobs:
         with:
           path: ~/.gradle/wrapper
           key: ${{ runner.os }}-gradle-${{ hashFiles('gradle/wrapper/gradle-wrapper.properties') }}
+      - name: Set wrapper permissions
+        run: chmod +x gradlew
       - name: Publish project
-        run: chmod +x gradlew && ./gradlew publish
+        run: ./gradlew publish
         env:
           GITHUB_USER: RakSrinaNa
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

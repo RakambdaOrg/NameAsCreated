@@ -1,7 +1,5 @@
 package fr.raksrinana.nameascreated;
 
-import com.beust.jcommander.JCommander;
-import com.beust.jcommander.ParameterException;
 import fr.raksrinana.nameascreated.renaming.RenameDate;
 import fr.raksrinana.nameascreated.renaming.RenameIncrementing;
 import fr.raksrinana.nameascreated.strategy.ByDateRenaming;
@@ -9,7 +7,9 @@ import fr.raksrinana.utils.http.JacksonObjectMapper;
 import kong.unirest.Unirest;
 import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
+import picocli.CommandLine;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Objects;
@@ -24,24 +24,24 @@ public class Main{
 	 */
 	public static void main(final String[] args){
 		final var parameters = new CLIParameters();
+		var cli = new CommandLine(parameters);
+		cli.registerConverter(Path.class, Paths::get);
+		cli.setUnmatchedArgumentsAllowed(true);
 		try{
-			JCommander.newBuilder().addObject(parameters).build().parse(args);
+			cli.parseArgs(args);
 		}
-		catch(final ParameterException e){
+		catch(final CommandLine.ParameterException e){
 			log.error("Failed to parse arguments", e);
-			e.usage();
+			cli.usage(System.out);
 			return;
 		}
+		
 		Unirest.config().setObjectMapper(new JacksonObjectMapper()).connectTimeout(30000).socketTimeout(30000).enableCookieManagement(true).verifySsl(true);
 		NewFile.testMode = parameters.isTestMode();
 		final var files = parameters.getFiles().stream().flatMap(f -> listFiles(f, parameters.isRecursive()).stream()).distinct().collect(Collectors.toList());
 		switch(parameters.getRunMode()){
-			case DATE:
-				RenameDate.processFiles(new ByDateRenaming(), files);
-				break;
-			case SEQUENCE:
-				RenameIncrementing.processFiles(parameters.getStartIndex(), new ByDateRenaming(), files);
-				break;
+			case DATE -> RenameDate.processFiles(new ByDateRenaming(), files);
+			case SEQUENCE -> RenameIncrementing.processFiles(parameters.getStartIndex(), new ByDateRenaming(), files);
 		}
 	}
 	
