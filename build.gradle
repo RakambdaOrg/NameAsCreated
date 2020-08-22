@@ -21,6 +21,7 @@ plugins {
     id 'maven-publish'
     id 'com.novoda.build-properties' version '0.4.1'
     id 'io.freefair.lombok' version '5.1.0'
+    id 'com.github.breadmoirai.github-release' version '2.2.10'
 }
 
 def secretsFile = new File(".", "secrets.properties")
@@ -133,4 +134,13 @@ publishing {
             from(components.java)
         }
     }
+}
+
+githubRelease {
+    owner = "RakSrinaNa"
+    repo = "NameAsCreated"
+    token = buildProperties.secrets['GITHUB_TOKEN'].string
+    tagName = "v${project.version}"
+    releaseName = "v${project.version}"
+    targetCommitish = "master"
 }
