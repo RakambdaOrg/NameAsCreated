@@ -200,10 +200,12 @@ public class ByDateRenaming implements RenamingStrategy{
 			for(final var xmpDirectory : metadata.getDirectoriesOfType(XmpDirectory.class)){
 				final var xmpValues = xmpDirectory.getXmpProperties();
 				if(xmpValues.containsKey("exif:GPSLatitude") && xmpValues.containsKey("exif:GPSLongitude")){
-					final var zoneId = getAngle(xmpValues.get("exif:GPSLatitude")).flatMap(lat -> getAngle(xmpValues.get("exif:GPSLongitude")).flatMap(lon -> {
-						final var location = new PointLocation(new Latitude(lat), new Longitude(lon));
-						return getZoneID(location.getLatitude().getDegrees(), location.getLongitude().getDegrees());
-					}));
+					final var zoneId = getAngle(xmpValues.get("exif:GPSLatitude"))
+							.flatMap(lat -> getAngle(xmpValues.get("exif:GPSLongitude"))
+									.flatMap(lon -> {
+										final var location = new PointLocation(new Latitude(lat), new Longitude(lon));
+										return getZoneID(location.getLatitude().getDegrees(), location.getLongitude().getDegrees());
+									}));
 					if(zoneId.isPresent()){
 						return zoneId;
 					}
@@ -227,7 +229,12 @@ public class ByDateRenaming implements RenamingStrategy{
 	@NonNull
 	private static Optional<ZoneId> getZoneID(final double latitude, final double longitude){
 		try{
-			final var result = new ObjectGetRequestSender<>(new GenericType<GeonamesTimeZone>(){}, Unirest.get("http://api.geonames.org/timezoneJSON").queryString("lat", latitude).queryString("lng", longitude).queryString("username", "mrcraftcod")).getRequestHandler();
+			final var result = new ObjectGetRequestSender<>(new GenericType<GeonamesTimeZone>(){},
+					Unirest.get("http://api.geonames.org/timezoneJSON")
+							.queryString("lat", latitude)
+							.queryString("lng", longitude)
+							.queryString("username", "mrcraftcod"))
+					.getRequestHandler();
 			if(result.getResult().isSuccess()){
 				final var geonamesTimeZone = result.getRequestResult();
 				return Optional.ofNullable(geonamesTimeZone.getTimezoneId());
@@ -251,7 +258,9 @@ public class ByDateRenaming implements RenamingStrategy{
 		final var pattern = Pattern.compile("(\\d{1,3}),(\\d{1,2})\\.(\\d+)([NESW])");
 		final var matcher = pattern.matcher(s);
 		if(matcher.matches()){
-			var angle = Integer.parseInt(matcher.group(1)) + (Integer.parseInt(matcher.group(2)) / 60.0) + (Double.parseDouble("0." + matcher.group(3)) / 60.0);
+			var angle = Integer.parseInt(matcher.group(1))
+					+ (Integer.parseInt(matcher.group(2)) / 60.0)
+					+ (Double.parseDouble("0." + matcher.group(3)) / 60.0);
 			angle *= getMultiplicand(matcher.group(4));
 			return Optional.of(Angle.fromDegrees(angle));
 		}
@@ -266,12 +275,9 @@ public class ByDateRenaming implements RenamingStrategy{
 	 * @return The sign of the angle.
 	 */
 	private static double getMultiplicand(@NonNull final String group){
-		switch(group){
-			case "W":
-			case "S":
-				return -1;
-			default:
-				return 1;
-		}
+		return switch(group){
+			case "W", "S" -> -1;
+			default -> 1;
+		};
 	}
 }

@@ -36,9 +36,16 @@ public class Main{
 			return;
 		}
 		
-		Unirest.config().setObjectMapper(new JacksonObjectMapper()).connectTimeout(30000).socketTimeout(30000).enableCookieManagement(true).verifySsl(true);
+		Unirest.config().setObjectMapper(new JacksonObjectMapper())
+				.connectTimeout(30000)
+				.socketTimeout(30000)
+				.enableCookieManagement(true)
+				.verifySsl(true);
 		NewFile.testMode = parameters.isTestMode();
-		final var files = parameters.getFiles().stream().flatMap(f -> listFiles(f, parameters.isRecursive()).stream()).distinct().collect(Collectors.toList());
+		final var files = parameters.getFiles().stream()
+				.flatMap(f -> listFiles(f, parameters.isRecursive()).stream())
+				.distinct()
+				.collect(Collectors.toList());
 		switch(parameters.getRunMode()){
 			case DATE -> RenameDate.processFiles(new ByDateRenaming(), files);
 			case SEQUENCE -> RenameIncrementing.processFiles(parameters.getStartIndex(), new ByDateRenaming(), files);

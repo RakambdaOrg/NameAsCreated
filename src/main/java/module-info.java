@@ -10,6 +10,7 @@ open module fr.raksrinana.nameascreated {
 	requires com.fasterxml.jackson.databind;
 	requires com.google.gson;
 	requires static lombok;
+	
 	exports fr.raksrinana.nameascreated;
 	exports fr.raksrinana.nameascreated.strategy;
 	exports fr.raksrinana.nameascreated.extractor;

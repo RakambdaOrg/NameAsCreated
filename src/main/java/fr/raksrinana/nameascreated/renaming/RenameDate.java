@@ -17,7 +17,10 @@ public class RenameDate{
 	public static void processFiles(@NonNull final RenamingStrategy renamingStrategy, @NonNull final List<Path> files){
 		for(final var file : files){
 			try{
-				if(file.toFile().exists() && file.toFile().isFile() && file.toFile().getName().contains(".") && !file.toFile().getName().startsWith(".")){
+				if(file.toFile().exists()
+						&& file.toFile().isFile()
+						&& file.toFile().getName().contains(".")
+						&& !file.toFile().getName().startsWith(".")){
 					try{
 						final var newFile = renamingStrategy.renameFile(file);
 						final var fileTo = file.getParent().resolve(newFile.getName(file));
