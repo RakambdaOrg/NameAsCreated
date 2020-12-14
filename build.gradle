@@ -96,8 +96,9 @@ compileJava {
 }
 
 application {
-    mainModule = project.moduleName
-    mainClass = project.mainClass
+    archivesBaseName = project.name
+    archiveClassifier.set('shaded')
+    archiveVersion.set('')
 }
 
 java {
