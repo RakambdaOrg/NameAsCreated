@@ -96,9 +96,8 @@ compileJava {
 }
 
 application {
-    archivesBaseName = project.name
-    archiveClassifier.set('shaded')
-    archiveVersion.set('')
+    mainModule = project.moduleName
+    mainClass = project.mainClass
 }
 
 java {
@@ -107,7 +106,8 @@ java {
 
 shadowJar {
     archivesBaseName = project.name
-    classifier = 'shaded'
+    archiveClassifier.set('shaded')
+    archiveVersion.set('')
 }
 
 tasks.withType(JavaCompile) {
