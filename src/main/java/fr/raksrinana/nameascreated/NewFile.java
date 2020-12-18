@@ -33,9 +33,6 @@ public class NewFile{
 	public NewFile(@NonNull final String name, @NonNull final String extension, @NonNull final Path parent, @NonNull final ZonedDateTime fileDate, @NonNull final Path source){
 		this.parent = parent;
 		this.name = name;
-		if(!extension.startsWith(".")){
-			throw new IllegalArgumentException("Extension should start with a dot");
-		}
 		this.extension = extension.toLowerCase();
 		this.date = fileDate;
 		this.source = source;

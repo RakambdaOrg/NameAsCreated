@@ -89,8 +89,9 @@ public class ByDateRenaming implements RenamingStrategy{
 	public NewFile renameFile(@NonNull final Path path) throws IOException{
 		final var filename = path.getFileName().toString();
 		final var prefix = "";
-		final var extension = filename.substring(filename.lastIndexOf('.'));
-		final var name = filename.substring(0, filename.lastIndexOf('.'));
+		final var dotIndex = filename.lastIndexOf('.');
+		final var extension = dotIndex < 0 ? "" : filename.substring(dotIndex);
+		final var name = dotIndex < 0 ? filename : filename.substring(0, dotIndex);
 		final var attr = Files.readAttributes(path, BasicFileAttributes.class);
 		final var createdDate = Instant.ofEpochMilli(attr.lastModifiedTime().toMillis()).atZone(ZoneId.systemDefault());
 		return processMetadata(path, name, extension).orElseGet(() -> {
