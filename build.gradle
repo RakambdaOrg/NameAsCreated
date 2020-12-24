@@ -6,7 +6,7 @@ buildscript {
         picocli_version = '4.5.2'
         metadata_extractor_version='2.15.0'
         pointlocation6709_version='4.2.1'
-        unirest_version='3.11.08'
+        unirest_version='3.11.09'
         jackson_version='2.12.0'
     }
 }
