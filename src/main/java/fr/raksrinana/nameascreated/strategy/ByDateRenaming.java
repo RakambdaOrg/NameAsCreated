@@ -13,7 +13,6 @@ import fr.raksrinana.nameascreated.extractor.DateExtractor;
 import fr.raksrinana.nameascreated.extractor.SimpleDateExtractor;
 import fr.raksrinana.nameascreated.extractor.XmpDateExtractor;
 import fr.raksrinana.nameascreated.utils.GeonamesTimeZone;
-import fr.raksrinana.utils.http.requestssenders.get.ObjectGetRequestSender;
 import kong.unirest.GenericType;
 import kong.unirest.Unirest;
 import lombok.NonNull;
@@ -230,14 +229,13 @@ public class ByDateRenaming implements RenamingStrategy{
 	@NonNull
 	private static Optional<ZoneId> getZoneID(final double latitude, final double longitude){
 		try{
-			final var result = new ObjectGetRequestSender<>(new GenericType<GeonamesTimeZone>(){},
-					Unirest.get("http://api.geonames.org/timezoneJSON")
-							.queryString("lat", latitude)
-							.queryString("lng", longitude)
-							.queryString("username", "mrcraftcod"))
-					.getRequestHandler();
-			if(result.getResult().isSuccess()){
-				final var geonamesTimeZone = result.getRequestResult();
+			var request = Unirest.get("http://api.geonames.org/timezoneJSON")
+					.queryString("lat", latitude)
+					.queryString("lng", longitude)
+					.queryString("username", "mrcraftcod")
+					.asObject(new GenericType<GeonamesTimeZone>(){});
+			if(request.isSuccess()){
+				var geonamesTimeZone = request.getBody();
 				return Optional.ofNullable(geonamesTimeZone.getTimezoneId());
 			}
 		}

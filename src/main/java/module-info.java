@@ -1,5 +1,4 @@
 open module fr.raksrinana.nameascreated {
-	requires transitive fr.raksrinana.utils.http;
 	requires unirest.java;
 	requires metadata.extractor;
 	requires pointlocation6709;

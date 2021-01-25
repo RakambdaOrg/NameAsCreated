@@ -3,7 +3,7 @@ package fr.raksrinana.nameascreated;
 import fr.raksrinana.nameascreated.renaming.RenameDate;
 import fr.raksrinana.nameascreated.renaming.RenameIncrementing;
 import fr.raksrinana.nameascreated.strategy.ByDateRenaming;
-import fr.raksrinana.utils.http.JacksonObjectMapper;
+import fr.raksrinana.nameascreated.utils.JacksonObjectMapper;
 import kong.unirest.Unirest;
 import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
