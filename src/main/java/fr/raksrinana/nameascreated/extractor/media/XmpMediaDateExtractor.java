@@ -1,4 +1,4 @@
-package fr.raksrinana.nameascreated.extractor;
+package fr.raksrinana.nameascreated.extractor.media;
 
 import com.drew.metadata.Directory;
 import com.drew.metadata.xmp.XmpDirectory;
@@ -9,7 +9,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.TimeZone;
 
-public class XmpDateExtractor implements DateExtractor<XmpDirectory>{
+public class XmpMediaDateExtractor implements MediaDateExtractor<XmpDirectory>{
 	private final List<String> keys = List.of("xmp:CreateDate", "photoshop:DateCreated");
 	private final DateTimeFormatter dateTimeFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss");
 	

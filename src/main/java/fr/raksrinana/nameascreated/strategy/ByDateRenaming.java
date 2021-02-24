@@ -9,9 +9,13 @@ import com.drew.metadata.mov.metadata.QuickTimeMetadataDirectory;
 import com.drew.metadata.mp4.Mp4Directory;
 import com.drew.metadata.xmp.XmpDirectory;
 import fr.raksrinana.nameascreated.NewFile;
-import fr.raksrinana.nameascreated.extractor.DateExtractor;
-import fr.raksrinana.nameascreated.extractor.SimpleDateExtractor;
-import fr.raksrinana.nameascreated.extractor.XmpDateExtractor;
+import fr.raksrinana.nameascreated.extractor.media.MediaDateExtractor;
+import fr.raksrinana.nameascreated.extractor.media.SimpleMediaDateExtractor;
+import fr.raksrinana.nameascreated.extractor.media.XmpMediaDateExtractor;
+import fr.raksrinana.nameascreated.extractor.name.NameDateExtractor;
+import fr.raksrinana.nameascreated.extractor.name.Pattern1NameDateExtractorImpl;
+import fr.raksrinana.nameascreated.extractor.name.Pattern2NameDateExtractorImpl;
+import fr.raksrinana.nameascreated.extractor.name.Pattern3NameDateExtractorImpl;
 import fr.raksrinana.nameascreated.utils.GeonamesTimeZone;
 import kong.unirest.GenericType;
 import kong.unirest.Unirest;
@@ -39,8 +43,8 @@ import java.util.regex.Pattern;
 @Slf4j
 public class ByDateRenaming implements RenamingStrategy{
 	private final DateTimeFormatter outputDateFormat;
-	private final List<DateTimeFormatter> parsingFormats;
-	private final List<DateExtractor<?>> dateExtractors;
+	private final List<NameDateExtractor> dateFormats;
+	private final List<MediaDateExtractor<?>> mediaDateExtractors;
 	
 	/**
 	 * Constructor.
@@ -48,38 +52,30 @@ public class ByDateRenaming implements RenamingStrategy{
 	 * The output format will be `yyyy-MM-dd HH.mm.ss`.
 	 */
 	public ByDateRenaming(){
-		parsingFormats = new ArrayList<>();
-		parsingFormats.add(DateTimeFormatter.ofPattern("yyyy-MM-dd HH.mm.ss", Locale.ENGLISH).withZone(ZoneId.systemDefault()));
-		parsingFormats.add(DateTimeFormatter.ofPattern("yyyy-MM-dd HH-mm-ss", Locale.ENGLISH).withZone(ZoneId.systemDefault()));
-		parsingFormats.add(DateTimeFormatter.ofPattern("yyyy-MM-dd_HH-mm-ss", Locale.ENGLISH).withZone(ZoneId.systemDefault()));
-		parsingFormats.add(DateTimeFormatter.ofPattern("yyyy-MM-dd", Locale.ENGLISH).withZone(ZoneId.systemDefault()));
-		parsingFormats.add(DateTimeFormatter.ofPattern("'Screen Shot' yyyy-MM-dd 'at' HH.mm.ss", Locale.ENGLISH).withZone(ZoneId.systemDefault()));
-		parsingFormats.add(DateTimeFormatter.ofPattern("'Photo' MMM dd, hh mm ss a", Locale.ENGLISH).withZone(ZoneId.systemDefault()));
-		parsingFormats.add(DateTimeFormatter.ofPattern("'Photo' dd-MM-yyyy, HH mm ss", Locale.ENGLISH).withZone(ZoneId.systemDefault()));
-		parsingFormats.add(DateTimeFormatter.ofPattern("'Photo' dd-MM-yyyy HH mm ss", Locale.ENGLISH).withZone(ZoneId.systemDefault()));
-		parsingFormats.add(DateTimeFormatter.ofPattern("'Video' MMM dd, hh mm ss a", Locale.ENGLISH).withZone(ZoneId.systemDefault()));
-		parsingFormats.add(DateTimeFormatter.ofPattern("'Video' dd-MM-yyy, HH mm ss", Locale.ENGLISH).withZone(ZoneId.systemDefault()));
-		parsingFormats.add(DateTimeFormatter.ofPattern("'Video' dd-MM-yyy HH mm ss", Locale.ENGLISH).withZone(ZoneId.systemDefault()));
-		parsingFormats.add(DateTimeFormatter.ofPattern("dd MMM yyy, HH:mm:ss", Locale.ENGLISH).withZone(ZoneId.systemDefault()));
-		dateExtractors = new ArrayList<>();
-		dateExtractors.add(new SimpleDateExtractor<>(QuickTimeMetadataDirectory.class, QuickTimeMetadataDirectory.TAG_CREATION_DATE));
-		dateExtractors.add(new SimpleDateExtractor<>(QuickTimeDirectory.class, QuickTimeDirectory.TAG_CREATION_TIME));
-		dateExtractors.add(new SimpleDateExtractor<>(Mp4Directory.class, Mp4Directory.TAG_CREATION_TIME));
-		dateExtractors.add(new SimpleDateExtractor<>(ExifSubIFDDirectory.class, ExifSubIFDDirectory.TAG_DATETIME_ORIGINAL));
-		dateExtractors.add(new XmpDateExtractor());
+		dateFormats = new ArrayList<>();
+		dateFormats.add(new Pattern1NameDateExtractorImpl());
+		dateFormats.add(new Pattern2NameDateExtractorImpl());
+		dateFormats.add(new Pattern3NameDateExtractorImpl());
+		
+		mediaDateExtractors = new ArrayList<>();
+		mediaDateExtractors.add(new SimpleMediaDateExtractor<>(QuickTimeMetadataDirectory.class, QuickTimeMetadataDirectory.TAG_CREATION_DATE));
+		mediaDateExtractors.add(new SimpleMediaDateExtractor<>(QuickTimeDirectory.class, QuickTimeDirectory.TAG_CREATION_TIME));
+		mediaDateExtractors.add(new SimpleMediaDateExtractor<>(Mp4Directory.class, Mp4Directory.TAG_CREATION_TIME));
+		mediaDateExtractors.add(new SimpleMediaDateExtractor<>(ExifSubIFDDirectory.class, ExifSubIFDDirectory.TAG_DATETIME_ORIGINAL));
+		mediaDateExtractors.add(new XmpMediaDateExtractor());
 		outputDateFormat = DateTimeFormatter.ofPattern("yyyy-MM-dd HH.mm.ss", Locale.ENGLISH).withZone(ZoneId.systemDefault());
 	}
 	
 	/**
 	 * Constructor.
 	 *
-	 * @param parsingFormats   The formatters to parse dates.
-	 * @param dateExtractors   The extractors to extract data from the dictionaries of the file.
-	 * @param outputDateFormat The output format.
+	 * @param dateFormats         The extractors to extract data from the file name.
+	 * @param mediaDateExtractors The extractors to extract data from the dictionaries of the file.
+	 * @param outputDateFormat    The output format.
 	 */
-	public ByDateRenaming(@NonNull final List<DateTimeFormatter> parsingFormats, @NonNull final List<DateExtractor<?>> dateExtractors, @NonNull final DateTimeFormatter outputDateFormat){
-		this.parsingFormats = parsingFormats;
-		this.dateExtractors = dateExtractors;
+	public ByDateRenaming(@NonNull final List<NameDateExtractor> dateFormats, @NonNull final List<MediaDateExtractor<?>> mediaDateExtractors, @NonNull final DateTimeFormatter outputDateFormat){
+		this.dateFormats = dateFormats;
+		this.mediaDateExtractors = mediaDateExtractors;
 		this.outputDateFormat = outputDateFormat;
 	}
 	
@@ -93,33 +89,39 @@ public class ByDateRenaming implements RenamingStrategy{
 		final var name = dotIndex < 0 ? filename : filename.substring(0, dotIndex);
 		final var attr = Files.readAttributes(path, BasicFileAttributes.class);
 		final var createdDate = Instant.ofEpochMilli(attr.lastModifiedTime().toMillis()).atZone(ZoneId.systemDefault());
-		return processMetadata(path, name, extension).orElseGet(() -> {
-			for(final var dateTimeFormatter : parsingFormats){
-				try{
-					log.debug("Trying format `{}`", dateTimeFormatter);
-					final var date = ZonedDateTime.parse(name, dateTimeFormatter);
+		return processMetadata(path, name, extension)
+				.orElseGet(() -> processFileName(path, prefix, extension, name, createdDate));
+	}
+	
+	private NewFile processFileName(Path path, String prefix, String extension, String name, ZonedDateTime createdDate){
+		for(final var nameDateExtractor : dateFormats){
+			try{
+				log.debug("Trying extractor `{}`", nameDateExtractor);
+				var dateOptional = nameDateExtractor.parse(name);
+				if(dateOptional.isPresent()){
+					var date = dateOptional.get();
 					if(date.getYear() < 1970){
 						throw new ParseException("Invalid year", 0);
 					}
 					log.info("Matched date format for {}{}", name, extension);
 					return new NewFile(outputDateFormat.format(date), extension, path.getParent(), date, path);
 				}
-				catch(final ParseException e){
-					log.warn("Invalid year with used format for file {}", path);
-				}
-				catch(final DateTimeParseException ignored){
-				}
-				catch(final Exception e){
-					log.error("Error using format {} => {}", dateTimeFormatter, e.getMessage());
-				}
 			}
-			log.warn("Unrecognized date format : {}{}, using file last modified time", name, extension);
-			var theDate = createdDate;
-			if(createdDate.getYear() <= 1970){
-				theDate = createdDate.withYear(LocalDateTime.now().getYear());
+			catch(final ParseException e){
+				log.warn("Invalid year with used format for file {}", path);
 			}
-			return new NewFile(prefix + outputDateFormat.format(theDate), extension, path.getParent(), theDate, path);
-		});
+			catch(final DateTimeParseException ignored){
+			}
+			catch(final Exception e){
+				log.error("Error using format {} => {}", nameDateExtractor, e.getMessage());
+			}
+		}
+		log.warn("Unrecognized date format : {}{}, using file last modified time", name, extension);
+		var theDate = createdDate;
+		if(createdDate.getYear() <= 1970){
+			theDate = createdDate.withYear(LocalDateTime.now().getYear());
+		}
+		return new NewFile(prefix + outputDateFormat.format(theDate), extension, path.getParent(), theDate, path);
 	}
 	
 	/**
@@ -138,7 +140,7 @@ public class ByDateRenaming implements RenamingStrategy{
 			if(Objects.nonNull(metadata)){
 				final var zoneID = getZoneIdFromMetadata(metadata).orElse(ZoneId.systemDefault());
 				final var timeZone = TimeZone.getTimeZone(zoneID);
-				for(final var dataExtractor : dateExtractors){
+				for(final var dataExtractor : mediaDateExtractors){
 					for(var directory : metadata.getDirectoriesOfType(dataExtractor.getKlass())){
 						try{
 							log.debug("Trying {}", dataExtractor.getKlass().getName());

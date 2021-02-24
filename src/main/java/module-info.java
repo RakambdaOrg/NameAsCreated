@@ -12,5 +12,6 @@ open module fr.raksrinana.nameascreated {
 	
 	exports fr.raksrinana.nameascreated;
 	exports fr.raksrinana.nameascreated.strategy;
-	exports fr.raksrinana.nameascreated.extractor;
+	exports fr.raksrinana.nameascreated.extractor.media;
+	exports fr.raksrinana.nameascreated.extractor.name;
 }

@@ -1,4 +1,4 @@
-package fr.raksrinana.nameascreated.extractor;
+package fr.raksrinana.nameascreated.extractor.media;
 
 import com.drew.metadata.Directory;
 import lombok.NonNull;
@@ -9,7 +9,7 @@ import java.util.TimeZone;
 /**
  * @param <T> The directory type.
  */
-public interface DateExtractor<T extends Directory>{
+public interface MediaDateExtractor<T extends Directory>{
 	/**
 	 * Get the date from the given {@link Directory}.
 	 *

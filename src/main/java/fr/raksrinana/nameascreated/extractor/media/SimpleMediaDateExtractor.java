@@ -1,4 +1,4 @@
-package fr.raksrinana.nameascreated.extractor;
+package fr.raksrinana.nameascreated.extractor.media;
 
 import com.drew.metadata.Directory;
 import lombok.Getter;
@@ -8,7 +8,7 @@ import java.util.Date;
 import java.util.Optional;
 import java.util.TimeZone;
 
-public class SimpleDateExtractor<T extends Directory> implements DateExtractor<T>{
+public class SimpleMediaDateExtractor<T extends Directory> implements MediaDateExtractor<T>{
 	private final int tag;
 	@Getter
 	private final Class<T> klass;
@@ -19,7 +19,7 @@ public class SimpleDateExtractor<T extends Directory> implements DateExtractor<T
 	 * @param klass The class of the directory.
 	 * @param tag   The tag to fetch the date from.
 	 */
-	public SimpleDateExtractor(@NonNull final Class<T> klass, final int tag){
+	public SimpleMediaDateExtractor(@NonNull final Class<T> klass, final int tag){
 		this.klass = klass;
 		this.tag = tag;
 	}
