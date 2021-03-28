@@ -6,4 +6,3 @@ target/
 test/
 
 *.iml
-secrets.properties

@@ -1,7 +1,7 @@
 package fr.raksrinana.nameascreated.extractor.media;
 
 import com.drew.metadata.Directory;
-import lombok.NonNull;
+import org.jetbrains.annotations.NotNull;
 import java.time.ZonedDateTime;
 import java.util.Optional;
 import java.util.TimeZone;
@@ -18,12 +18,12 @@ public interface MediaDateExtractor<T extends Directory>{
 	 *
 	 * @return The date or null if not found.
 	 */
-	@NonNull Optional<ZonedDateTime> parse(@NonNull Directory directory, @NonNull TimeZone tz);
+	@NotNull Optional<ZonedDateTime> parse(@NotNull Directory directory, @NotNull TimeZone tz);
 	
 	/**
 	 * Get the class of the directory.
 	 *
 	 * @return The directory's class.
 	 */
-	@NonNull Class<T> getKlass();
+	@NotNull Class<T> getKlass();
 }

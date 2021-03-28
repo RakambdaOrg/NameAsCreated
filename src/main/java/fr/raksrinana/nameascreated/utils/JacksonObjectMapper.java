@@ -1,6 +1,5 @@
 package fr.raksrinana.nameascreated.utils;
 
-import com.fasterxml.jackson.annotation.JsonAutoDetect;
 import com.fasterxml.jackson.core.JsonFactoryBuilder;
 import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.core.JsonProcessingException;
@@ -11,7 +10,8 @@ import kong.unirest.GenericType;
 import kong.unirest.ObjectMapper;
 import java.io.IOException;
 import java.lang.reflect.Type;
-import static com.fasterxml.jackson.annotation.JsonAutoDetect.Visibility.*;
+import static com.fasterxml.jackson.annotation.JsonAutoDetect.Visibility.ANY;
+import static com.fasterxml.jackson.annotation.JsonAutoDetect.Visibility.NONE;
 
 public class JacksonObjectMapper implements ObjectMapper{
 	private final com.fasterxml.jackson.databind.ObjectMapper mapper;
@@ -19,29 +19,29 @@ public class JacksonObjectMapper implements ObjectMapper{
 	public JacksonObjectMapper(){
 		JsonFactoryBuilder factoryBuilder = new JsonFactoryBuilder();
 		factoryBuilder.enable(JsonReadFeature.ALLOW_TRAILING_COMMA);
-		this.mapper = new com.fasterxml.jackson.databind.ObjectMapper(factoryBuilder.build());
-		this.mapper.setVisibility(this.mapper.getSerializationConfig()
+		mapper = new com.fasterxml.jackson.databind.ObjectMapper(factoryBuilder.build());
+		mapper.setVisibility(mapper.getSerializationConfig()
 				.getDefaultVisibilityChecker()
 				.withFieldVisibility(ANY)
 				.withGetterVisibility(NONE)
 				.withSetterVisibility(NONE)
 				.withCreatorVisibility(NONE));
-		this.mapper.enable(JsonParser.Feature.ALLOW_COMMENTS);
-		this.mapper.enable(MapperFeature.ACCEPT_CASE_INSENSITIVE_ENUMS);
+		mapper.enable(JsonParser.Feature.ALLOW_COMMENTS);
+		mapper.enable(MapperFeature.ACCEPT_CASE_INSENSITIVE_ENUMS);
 	}
 	
 	public <T> T readValue(String value, Class<T> valueType){
 		try{
-			return this.mapper.readValue(value, valueType);
+			return mapper.readValue(value, valueType);
 		}
 		catch(IOException var4){
 			throw new RuntimeException(var4);
 		}
 	}
 	
-	public <T> T readValue(String value, final GenericType<T> genericType){
+	public <T> T readValue(String value, GenericType<T> genericType){
 		try{
-			return this.mapper.readValue(value, new TypeReference<T>(){
+			return mapper.readValue(value, new TypeReference<T>(){
 				public Type getType(){
 					return genericType.getType();
 				}
@@ -54,7 +54,7 @@ public class JacksonObjectMapper implements ObjectMapper{
 	
 	public String writeValue(Object value){
 		try{
-			return this.mapper.writeValueAsString(value);
+			return mapper.writeValueAsString(value);
 		}
 		catch(JsonProcessingException var3){
 			throw new RuntimeException(var3);

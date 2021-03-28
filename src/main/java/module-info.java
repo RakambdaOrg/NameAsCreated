@@ -7,8 +7,8 @@ open module fr.raksrinana.nameascreated {
 	requires info.picocli;
 	requires com.fasterxml.jackson.annotation;
 	requires com.fasterxml.jackson.databind;
-	requires com.google.gson;
 	requires static lombok;
+	requires static org.jetbrains.annotations;
 	
 	exports fr.raksrinana.nameascreated;
 	exports fr.raksrinana.nameascreated.strategy;

@@ -1,7 +1,7 @@
 package fr.raksrinana.nameascreated.strategy;
 
 import fr.raksrinana.nameascreated.NewFile;
-import lombok.NonNull;
+import org.jetbrains.annotations.NotNull;
 import java.nio.file.Path;
 
 @FunctionalInterface
@@ -15,5 +15,5 @@ public interface RenamingStrategy{
 	 *
 	 * @throws Exception If something went wrong.
 	 */
-	@NonNull NewFile renameFile(@NonNull Path path) throws Exception;
+	@NotNull NewFile renameFile(@NotNull Path path) throws Exception;
 }

@@ -3,6 +3,8 @@ package fr.raksrinana.nameascreated.renaming;
 import fr.raksrinana.nameascreated.strategy.RenamingStrategy;
 import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
+import org.jetbrains.annotations.NotNull;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
 
@@ -12,34 +14,31 @@ public class RenameDate{
 	 * Rename files with their creation date.
 	 *
 	 * @param renamingStrategy The strategy to rename the files.
-	 * @param files            The list of files to modify.
+	 * @param paths            The list of files to modify.
 	 */
-	public static void processFiles(@NonNull final RenamingStrategy renamingStrategy, @NonNull final List<Path> files){
-		for(final var file : files){
+	public static void processFiles(@NotNull RenamingStrategy renamingStrategy, @NotNull List<Path> paths){
+		for(var path : paths){
 			try{
-				if(file.toFile().exists()
-						&& file.toFile().isFile()
-						&& file.toFile().getName().contains(".")
-						&& !file.toFile().getName().startsWith(".")){
+				if(Files.isRegularFile(path) && path.getFileName().toString().contains(".") && !path.getFileName().toString().startsWith(".")){
 					try{
-						final var newFile = renamingStrategy.renameFile(file);
-						final var fileTo = file.getParent().resolve(newFile.getName(file));
-						if(fileTo.toFile().getName().equals(file.toFile().getName())){
+						var newFile = renamingStrategy.renameFile(path);
+						var fileTo = path.getParent().resolve(newFile.getName(path));
+						if(fileTo.getFileName().toString().equals(path.toFile().getName())){
 							continue;
 						}
-						if(fileTo.toFile().exists()){
-							log.warn("Couldn't rename file {} to {}, file already exists", file, fileTo);
+						if(Files.exists(fileTo)){
+							log.warn("Couldn't rename file {} to {}, file already exists", path, fileTo);
 							continue;
 						}
 						newFile.moveTo(fileTo);
 					}
-					catch(final Exception e){
-						log.error("Error strategy file {}: {}", file, e.getMessage());
+					catch(Exception e){
+						log.error("Error strategy file {}: {}", path, e.getMessage());
 					}
 				}
 			}
-			catch(final Exception e){
-				log.error("Error processing file {}", file, e);
+			catch(Exception e){
+				log.error("Error processing file {}", path, e);
 			}
 		}
 	}

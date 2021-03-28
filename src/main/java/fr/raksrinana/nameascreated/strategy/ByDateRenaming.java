@@ -19,8 +19,8 @@ import fr.raksrinana.nameascreated.extractor.name.Pattern3NameDateExtractorImpl;
 import fr.raksrinana.nameascreated.utils.GeonamesTimeZone;
 import kong.unirest.GenericType;
 import kong.unirest.Unirest;
-import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
+import org.jetbrains.annotations.NotNull;
 import us.fatehi.pointlocation6709.Angle;
 import us.fatehi.pointlocation6709.Latitude;
 import us.fatehi.pointlocation6709.Longitude;
@@ -73,28 +73,28 @@ public class ByDateRenaming implements RenamingStrategy{
 	 * @param mediaDateExtractors The extractors to extract data from the dictionaries of the file.
 	 * @param outputDateFormat    The output format.
 	 */
-	public ByDateRenaming(@NonNull final List<NameDateExtractor> dateFormats, @NonNull final List<MediaDateExtractor<?>> mediaDateExtractors, @NonNull final DateTimeFormatter outputDateFormat){
+	public ByDateRenaming(@NotNull List<NameDateExtractor> dateFormats, @NotNull List<MediaDateExtractor<?>> mediaDateExtractors, @NotNull DateTimeFormatter outputDateFormat){
 		this.dateFormats = dateFormats;
 		this.mediaDateExtractors = mediaDateExtractors;
 		this.outputDateFormat = outputDateFormat;
 	}
 	
 	@Override
-	@NonNull
-	public NewFile renameFile(@NonNull final Path path) throws IOException{
-		final var filename = path.getFileName().toString();
+	@NotNull
+	public NewFile renameFile(@NotNull Path path) throws IOException{
+		var filename = path.getFileName().toString();
 		final var prefix = "";
-		final var dotIndex = filename.lastIndexOf('.');
-		final var extension = dotIndex < 0 ? "" : filename.substring(dotIndex);
-		final var name = dotIndex < 0 ? filename : filename.substring(0, dotIndex);
-		final var attr = Files.readAttributes(path, BasicFileAttributes.class);
-		final var createdDate = Instant.ofEpochMilli(attr.lastModifiedTime().toMillis()).atZone(ZoneId.systemDefault());
+		var dotIndex = filename.lastIndexOf('.');
+		var extension = dotIndex < 0 ? "" : filename.substring(dotIndex);
+		var name = dotIndex < 0 ? filename : filename.substring(0, dotIndex);
+		var attr = Files.readAttributes(path, BasicFileAttributes.class);
+		var createdDate = Instant.ofEpochMilli(attr.lastModifiedTime().toMillis()).atZone(ZoneId.systemDefault());
 		return processMetadata(path, name, extension)
 				.orElseGet(() -> processFileName(path, prefix, extension, name, createdDate));
 	}
 	
 	private NewFile processFileName(Path path, String prefix, String extension, String name, ZonedDateTime createdDate){
-		for(final var nameDateExtractor : dateFormats){
+		for(var nameDateExtractor : dateFormats){
 			try{
 				log.debug("Trying extractor `{}`", nameDateExtractor);
 				var dateOptional = nameDateExtractor.parse(name);
@@ -107,12 +107,12 @@ public class ByDateRenaming implements RenamingStrategy{
 					return new NewFile(outputDateFormat.format(date), extension, path.getParent(), date, path);
 				}
 			}
-			catch(final ParseException e){
+			catch(ParseException e){
 				log.warn("Invalid year with used format for file {}", path);
 			}
-			catch(final DateTimeParseException ignored){
+			catch(DateTimeParseException ignored){
 			}
-			catch(final Exception e){
+			catch(Exception e){
 				log.error("Error using format {} => {}", nameDateExtractor, e.getMessage());
 			}
 		}
@@ -133,21 +133,21 @@ public class ByDateRenaming implements RenamingStrategy{
 	 *
 	 * @return A potential newFile object.
 	 */
-	@NonNull
-	private Optional<NewFile> processMetadata(@NonNull Path path, @NonNull String name, @NonNull String extension){
+	@NotNull
+	private Optional<NewFile> processMetadata(@NotNull Path path, @NotNull String name, @NotNull String extension){
 		try{
-			final var metadata = ImageMetadataReader.readMetadata(path.toFile());
+			var metadata = ImageMetadataReader.readMetadata(path.toFile());
 			if(Objects.nonNull(metadata)){
-				final var zoneID = getZoneIdFromMetadata(metadata).orElse(ZoneId.systemDefault());
-				final var timeZone = TimeZone.getTimeZone(zoneID);
-				for(final var dataExtractor : mediaDateExtractors){
+				var zoneID = getZoneIdFromMetadata(metadata).orElse(ZoneId.systemDefault());
+				var timeZone = TimeZone.getTimeZone(zoneID);
+				for(var dataExtractor : mediaDateExtractors){
 					for(var directory : metadata.getDirectoriesOfType(dataExtractor.getKlass())){
 						try{
 							log.debug("Trying {}", dataExtractor.getKlass().getName());
 							if(Objects.nonNull(directory)){
 								var takenDateOptional = dataExtractor.parse(directory, timeZone);
 								if(takenDateOptional.isPresent()){
-									final var takenDate = takenDateOptional.get();
+									var takenDate = takenDateOptional.get();
 									log.info("Matched directory {} for {}{}", directory, name, extension);
 									if(takenDate.getYear() < 1970){
 										throw new ParseException("Invalid year", 0);
@@ -156,17 +156,17 @@ public class ByDateRenaming implements RenamingStrategy{
 								}
 							}
 						}
-						catch(final ParseException e){
+						catch(ParseException e){
 							log.warn("Invalid year with directory {} for file {}", dataExtractor.getKlass().getName(), path);
 						}
-						catch(final Exception e){
+						catch(Exception e){
 							log.error("Error processing directory {} for {}{} => {}", dataExtractor.getKlass().getName(), name, extension, e.getMessage());
 						}
 					}
 				}
 			}
 		}
-		catch(final Exception e){
+		catch(Exception e){
 			log.error("Error processing metadata for {}{} => {}", name, extension, e.getMessage());
 		}
 		return Optional.empty();
@@ -179,33 +179,33 @@ public class ByDateRenaming implements RenamingStrategy{
 	 *
 	 * @return The potential zoneID found.
 	 */
-	@NonNull
-	private Optional<ZoneId> getZoneIdFromMetadata(@NonNull final Metadata metadata){
+	@NotNull
+	private Optional<ZoneId> getZoneIdFromMetadata(@NotNull Metadata metadata){
 		try{
-			for(final var gpsDirectory : metadata.getDirectoriesOfType(GpsDirectory.class)){
-				final var location = gpsDirectory.getGeoLocation();
-				final var zoneId = getZoneID(location.getLatitude(), location.getLongitude());
+			for(var gpsDirectory : metadata.getDirectoriesOfType(GpsDirectory.class)){
+				var location = gpsDirectory.getGeoLocation();
+				var zoneId = getZoneID(location.getLatitude(), location.getLongitude());
 				if(zoneId.isPresent()){
 					return zoneId;
 				}
 			}
-			for(final var quickTimeMetadataDirectory : metadata.getDirectoriesOfType(QuickTimeMetadataDirectory.class)){
-				final var repr = quickTimeMetadataDirectory.getString(0x050D);
+			for(var quickTimeMetadataDirectory : metadata.getDirectoriesOfType(QuickTimeMetadataDirectory.class)){
+				var repr = quickTimeMetadataDirectory.getString(0x050D);
 				if(Objects.nonNull(repr) && !repr.isBlank()){
-					final var location = PointLocationParser.parsePointLocation(repr);
-					final var zoneId = getZoneID(location.getLatitude().getDegrees(), location.getLongitude().getDegrees());
+					var location = PointLocationParser.parsePointLocation(repr);
+					var zoneId = getZoneID(location.getLatitude().getDegrees(), location.getLongitude().getDegrees());
 					if(zoneId.isPresent()){
 						return zoneId;
 					}
 				}
 			}
-			for(final var xmpDirectory : metadata.getDirectoriesOfType(XmpDirectory.class)){
-				final var xmpValues = xmpDirectory.getXmpProperties();
+			for(var xmpDirectory : metadata.getDirectoriesOfType(XmpDirectory.class)){
+				var xmpValues = xmpDirectory.getXmpProperties();
 				if(xmpValues.containsKey("exif:GPSLatitude") && xmpValues.containsKey("exif:GPSLongitude")){
-					final var zoneId = getAngle(xmpValues.get("exif:GPSLatitude"))
+					var zoneId = getAngle(xmpValues.get("exif:GPSLatitude"))
 							.flatMap(lat -> getAngle(xmpValues.get("exif:GPSLongitude"))
 									.flatMap(lon -> {
-										final var location = new PointLocation(new Latitude(lat), new Longitude(lon));
+										var location = new PointLocation(new Latitude(lat), new Longitude(lon));
 										return getZoneID(location.getLatitude().getDegrees(), location.getLongitude().getDegrees());
 									}));
 					if(zoneId.isPresent()){
@@ -214,7 +214,7 @@ public class ByDateRenaming implements RenamingStrategy{
 				}
 			}
 		}
-		catch(final Exception e){
+		catch(Exception e){
 			log.warn("Error getting GPS infos", e);
 		}
 		return Optional.empty();
@@ -228,8 +228,8 @@ public class ByDateRenaming implements RenamingStrategy{
 	 *
 	 * @return The zoneID corresponding to this location.
 	 */
-	@NonNull
-	private static Optional<ZoneId> getZoneID(final double latitude, final double longitude){
+	@NotNull
+	private static Optional<ZoneId> getZoneID(double latitude, double longitude){
 		try{
 			var request = Unirest.get("http://api.geonames.org/timezoneJSON")
 					.queryString("lat", latitude)
@@ -241,7 +241,7 @@ public class ByDateRenaming implements RenamingStrategy{
 				return Optional.ofNullable(geonamesTimeZone.getTimezoneId());
 			}
 		}
-		catch(final Exception e){
+		catch(Exception e){
 			log.error("Error getting zoneID for coordinates {};{}", latitude, longitude, e);
 		}
 		return Optional.empty();
@@ -254,10 +254,10 @@ public class ByDateRenaming implements RenamingStrategy{
 	 *
 	 * @return The angle.
 	 */
-	@NonNull
-	private static Optional<Angle> getAngle(@NonNull final String s){
-		final var pattern = Pattern.compile("(\\d{1,3}),(\\d{1,2})\\.(\\d+)([NESW])");
-		final var matcher = pattern.matcher(s);
+	@NotNull
+	private static Optional<Angle> getAngle(@NotNull String s){
+		var pattern = Pattern.compile("(\\d{1,3}),(\\d{1,2})\\.(\\d+)([NESW])");
+		var matcher = pattern.matcher(s);
 		if(matcher.matches()){
 			var angle = Integer.parseInt(matcher.group(1))
 					+ (Integer.parseInt(matcher.group(2)) / 60.0)
@@ -275,7 +275,7 @@ public class ByDateRenaming implements RenamingStrategy{
 	 *
 	 * @return The sign of the angle.
 	 */
-	private static double getMultiplicand(@NonNull final String group){
+	private static double getMultiplicand(@NotNull String group){
 		return switch(group){
 			case "W", "S" -> -1;
 			default -> 1;

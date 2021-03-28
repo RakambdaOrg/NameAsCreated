@@ -1,8 +1,8 @@
 package fr.raksrinana.nameascreated;
 
 import lombok.Getter;
-import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
+import org.jetbrains.annotations.NotNull;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -30,11 +30,11 @@ public class NewFile{
 	 * @param fileDate  The creation date of the file.
 	 * @param source    The source file.
 	 */
-	public NewFile(@NonNull final String name, @NonNull final String extension, @NonNull final Path parent, @NonNull final ZonedDateTime fileDate, @NonNull final Path source){
+	public NewFile(@NotNull String name, @NotNull String extension, @NotNull Path parent, @NotNull ZonedDateTime fileDate, @NotNull Path source){
 		this.parent = parent;
 		this.name = name;
 		this.extension = extension.toLowerCase();
-		this.date = fileDate;
+		date = fileDate;
 		this.source = source;
 	}
 	
@@ -45,16 +45,16 @@ public class NewFile{
 	 *
 	 * @return The new name.
 	 */
-	@NonNull
-	public String getName(final Path directory){
+	@NotNull
+	public String getName(Path directory){
 		if(directory == null || (name + extension).equalsIgnoreCase(directory.getFileName().toString())){
 			return name + extension;
 		}
-		if(!directory.resolve(name + extension).toFile().exists()){
+		if(!Files.exists(directory.resolve(name + extension))){
 			return name + extension;
 		}
 		var i = 1;
-		while(directory.resolve(String.format("%s (%d)%s", name, i, extension)).toFile().exists()){
+		while(Files.exists(directory.resolve(String.format("%s (%d)%s", name, i, extension)))){
 			i++;
 		}
 		return String.format("%s (%d)%s", name, i, extension);
@@ -65,10 +65,10 @@ public class NewFile{
 	 *
 	 * @param target The file to rename it to.
 	 */
-	public void moveTo(@NonNull final Path target){
+	public void moveTo(@NotNull Path target){
 		if(!testMode){
 			try{
-				Files.move(this.getSource(), target);
+				Files.move(getSource(), target);
 				log.debug("Renamed {} to {}", this, target);
 			}
 			catch(IOException e){
