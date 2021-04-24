@@ -78,12 +78,11 @@ publishing {
 }
 
 githubRelease {
-    val githubRepoPassword: String by project
     val version: String by project
 
     owner("RakSrinaNa")
     repo("NameAsCreated")
-    token(githubRepoPassword)
+    token(project.findProperty("githubRepoPassword") as String? ?: "PLACEHOLDER")
     tagName("v${version}")
     releaseName(version)
 }
