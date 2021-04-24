@@ -2,11 +2,9 @@ plugins {
     idea
     java
     `java-library`
-    application
     `maven-publish`
-    id("com.github.johnrengelman.shadow") version ("6.1.0")
     id("com.github.ben-manes.versions") version ("0.38.0")
-    id("io.freefair.lombok") version ("5.3.0")
+    id("io.freefair.lombok") version ("6.0.0-m2")
     id("com.github.breadmoirai.github-release") version ("2.2.12")
 }
 
@@ -15,17 +13,12 @@ description = "NameAsCreated"
 
 dependencies {
     api(libs.slf4j)
-    api(libs.logback) {
-        exclude(group = "edu.washington.cs.types.checker", module = "checker-framework")
-    }
 
     api(libs.unirest)
     api(libs.bundles.jackson)
 
     api(libs.metadataExtractor)
     api(libs.pointLocation)
-
-    implementation(libs.picocli)
 
     compileOnly(libs.jetbrainsAnnotations)
 }
@@ -40,9 +33,6 @@ repositories {
             username = githubRepoUsername
             password = githubRepoPassword
         }
-    }
-    maven {
-        url = uri("https://projectlombok.org/edge-releases")
     }
     mavenCentral()
     jcenter()
@@ -68,12 +58,6 @@ tasks {
         }
     }
 
-    shadowJar {
-        archiveBaseName.set(project.name)
-        archiveClassifier.set("shaded")
-        archiveVersion.set("")
-    }
-
     wrapper {
         val wrapperVersion: String by project
         gradleVersion = wrapperVersion
@@ -83,15 +67,6 @@ tasks {
 java {
     sourceCompatibility = JavaVersion.VERSION_16
     targetCompatibility = JavaVersion.VERSION_16
-}
-
-application {
-    val moduleName: String by project
-    val className: String by project
-
-    mainClassName = className
-    mainModule.set(moduleName)
-    mainClass.set(className)
 }
 
 publishing {
@@ -124,8 +99,4 @@ githubRelease {
     token(githubRepoPassword)
     tagName("v${version}")
     releaseName(version)
-}
-
-lombok {
-    version.set("edge-SNAPSHOT")
 }
