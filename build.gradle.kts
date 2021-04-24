@@ -60,16 +60,13 @@ java {
 }
 
 publishing {
-    val githubRepoUsername: String by project
-    val githubRepoPassword: String by project
-
     repositories {
         maven {
             name = "GitHubPackages"
             url = uri("https://maven.pkg.github.com/RakSrinaNa/NameAsCreated")
             credentials {
-                username = githubRepoUsername
-                password = githubRepoPassword
+                username = project.findProperty("githubRepoUsername") as String
+                password = project.findProperty("githubRepoPassword") as String
             }
         }
     }
