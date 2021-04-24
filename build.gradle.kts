@@ -65,8 +65,8 @@ publishing {
             name = "GitHubPackages"
             url = uri("https://maven.pkg.github.com/RakSrinaNa/NameAsCreated")
             credentials {
-                username = project.findProperty("githubRepoUsername") as String
-                password = project.findProperty("githubRepoPassword") as String
+                username = project.findProperty("githubRepoUsername") as String?
+                password = project.findProperty("githubRepoPassword") as String?
             }
         }
     }
