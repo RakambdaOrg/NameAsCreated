@@ -33,15 +33,7 @@ jobs:
       - name: Set gradle permissions
         run: chmod +x gradlew
       - name: Check project
-        run: ./gradlew check build -PgithubRepoUsername="${GITHUB_USER}" -PgithubRepoPassword="${GITHUB_TOKEN}"
-        env:
-          GITHUB_USER: RakSrinaNa
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      - uses: actions/upload-artifact@v2
-        name: Upload artifact
-        with:
-          name: shadow-jar
-          path: build/libs/nameascreated-shaded.jar
+        run: ./gradlew check build
 
   publish:
     runs-on: ubuntu-latest
@@ -71,23 +63,3 @@ jobs:
         env:
           GITHUB_USER: RakSrinaNa
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
-  dropbox:
-    runs-on: ubuntu-latest
-    needs: build
-    if:
-      contains('
-      refs/heads/main
-      ', github.ref)
-    steps:
-      - uses: actions/download-artifact@v2
-        name: Download artifact
-        with:
-          name: shadow-jar
-      - name: Deploy on Dropbox
-        uses: deka0106/upload-to-dropbox@v2
-        with:
-          dropbox_access_token: ${{ secrets.DROPBOX_DEPLOY_TOKEN }}
-          src: "nameascreated-shaded.jar"
-          dest: "/Documents/JARs/NameAsCreated.jar"
-          mode: overwrite

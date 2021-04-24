@@ -24,16 +24,6 @@ dependencies {
 }
 
 repositories {
-    val githubRepoUsername: String by project
-    val githubRepoPassword: String by project
-
-    maven {
-        url = uri("https://maven.pkg.github.com/RakSrinaNa/JavaUtils/")
-        credentials {
-            username = githubRepoUsername
-            password = githubRepoPassword
-        }
-    }
     mavenCentral()
     jcenter()
 }
