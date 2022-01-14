@@ -1,5 +1,5 @@
 [versions]
-slf4j-version = "2.0.0-alpha5"
+slf4j-version = "2.0.0-alpha6"
 unirest-version = "4.0.0-RC1"
 picocli-version = "4.6.2"
 jackson-version = "2.13.1"
