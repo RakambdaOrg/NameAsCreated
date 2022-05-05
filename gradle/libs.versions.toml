@@ -2,7 +2,7 @@
 slf4j-version = "2.0.0-alpha7"
 unirest-version = "4.0.0-RC2"
 picocli-version = "4.6.3"
-jackson-version = "2.13.2.1"
+jackson-version = "2.13.2"
 jetbrains-annotations-version = "23.0.0"
 metadata-extractor-version = "2.17.0"
 pointlocation6709-version = "4.2.1"
